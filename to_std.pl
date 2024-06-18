@@ -12,6 +12,7 @@ use Cwd qw/ getcwd abs_path /;
 use Template;
 use SemVer;
 use XML::RSS;
+use DateTime;
 
 # external imports
 use Config::Simple;
@@ -34,6 +35,7 @@ my %m_main = (
 	slug => undef,
 	version => undef,
 	summary => undef,
+	time => undef,
 	tech_main => undef,
 	tech => \@m_tech,
 	vcs_upstream => undef,
@@ -103,6 +105,8 @@ if (! -f $targz_local ) {
 	#croak("no package file found, looked for: " . $targz);
 	debug("no package file found, looked for: " . $targz);
 }
+my @targz_stat = stat ( $targz_local );
+$m_main{time} = DateTime->from_epoch( epoch => $targz_stat[9] )->stringify();
 
 my $tt = Template->new({
 	INCLUDE_PATH => '.',
@@ -150,6 +154,9 @@ $rss->add_item (
 	title => $rss_title,
 	link => $targz,
 	description => $out,
+	dc => {
+		date => $m_main{time},
+	},
 #  dc => {
 	#       subject  => "X11/Utilities",
 	#            creator  => "David Allen (s2mdalle at titan.vcu.edu)",
