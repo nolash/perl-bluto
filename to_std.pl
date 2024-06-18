@@ -35,6 +35,7 @@ my %m_main = (
 	slug => undef,
 	version => undef,
 	summary => undef,
+	changelog => '',
 	time => undef,
 	tech_main => undef,
 	tech => \@m_tech,
@@ -46,10 +47,12 @@ my %m_main = (
 my $ini_dir = File::Spec->catfile(getcwd, '.bluto');
 my $out_dir = getcwd;
 my $feed_dir = getcwd;
+my $content_dir = getcwd;
 GetOptions(
 	'd:s', \$ini_dir,
 	'o:s', \$out_dir,
 	'f:s', \$feed_dir,
+	'c:s', \$content_dir,
 );
 $ini_dir = abs_path($ini_dir);
 
@@ -95,9 +98,21 @@ foreach my $k ($cfg->vars()) {
 	}
 }
 
+# process changelog entry
+my $body = '';
 if (!defined $have_version_match) {
 	croak("no changelog found for version " . $m_main{version});
+} else {
+	if ($cfg->param('changelog.' . $have_version_match) =~ '^sha256:(.*)$' ) {
+		my $fp = File::Spec->catfile ( $content_dir, $1 );
+		debug('resolve sha256 content ' . $1 . ' for ' . $have_version_match . ' from ' . $fp);
+		open(my $f, "<$fp") or die ('cannot open content read from: ' . $fp);
+		while (<$f>) {
+			$m_main{changelog} .= $_;
+		}
+	}
 }
+
 
 my $targz = $m_main{slug} . '-' . $have_version_match . '.tar.gz';
 my $targz_local = File::Spec->catfile($ini_dir, $targz);
@@ -142,8 +157,9 @@ if ( -f $feed_file ) {
 	);
 }
 
-# check if we already have the title
 my $rss_title = $m_main{slug} . ' ' . $m_main{version};
+
+# check if we already have the title
 foreach my $item ( $rss->{items}) {
 	if ( defined $item->[0] && $item->[0]{title} eq $rss_title ) {
 		die('already have published record for ' . $rss_title);

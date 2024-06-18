@@ -4,3 +4,5 @@
 Version release: [% version %]
 
 foo bar baz
+
+[% changelog %]
