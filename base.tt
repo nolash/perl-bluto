@@ -1,0 +1,6 @@
+[% name %]
+===========
+
+Version release: [% version %]
+
+foo bar baz
