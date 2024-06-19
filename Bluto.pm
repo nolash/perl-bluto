@@ -56,6 +56,7 @@ sub from_config {
 	$m_main{slug} = $cfg->param('main.slug');
 	$m_main{summary} = $cfg->param('main.summary');
 	$m_main{license} = $cfg->param('main.license');
+	$m_main{url} = $cfg->param('main.url');
 	$m_main{author_maintainer}[0] = $cfg->param('author:maintainer.name') . " <" . $cfg->param('author:maintainer.email') . ">";
 	$m_main{author_maintainer}[1] = $cfg->param('author:maintainer.pgp');
 
@@ -152,6 +153,7 @@ sub from_config {
 
 sub get_announcement {
 	my $env = shift;
+
 	my $tt = Template->new({
 		INCLUDE_PATH => '.',
 		INTERPOLATE => 1,
@@ -160,6 +162,14 @@ sub get_announcement {
 	my $out;
 	$tt->process($env->{template_path}, \%m_main, \$out) or error('error processing template: '. $tt->error());
 	return $out;
+}
+
+sub get_rss {
+	my $env = shift;
+
+	my $out = get_announcement($env);
+
+	return Bluto::RSS::to_string(\%m_main, $env, $out);
 }
 
 1;

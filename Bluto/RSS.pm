@@ -1,37 +1,54 @@
 package Bluto::RSS;
 
+use File::Spec;
 use DateTime;
 
 use XML::RSS;
 use Template;
 
 use Log::Term::Ansi qw/error info debug warn trace/;
+use Bluto::Version;
 
 
-sub to_file() {
-	my $rss_title = $m_main{slug} . ' ' . $m_main{version};
+sub get_feed_filepath {
+	my $release = shift;
+	my $env = shift;
+	
+	my $fn = $release->{slug} . '.bluto.rss';
+	my $fp = File::Spec->catfile($env->{feed_dir}, $fn);
+	return $fp;
+}
+
+sub process {
+	my $release = shift;
+	my $env = shift;
+	my $body = shift;
+
+	my $rss_title = $release->{slug} . ' ' . $release->{version};
 	my $rss;
 	$rss = XML::RSS->new;
+	my $feed_file = get_feed_filepath($release, $env);
 	if ( -f $feed_file ) {
 		info('found existing feed file ' . $feed_file);
 		$rss->parsefile( $feed_file );
 		foreach my $v ( @{$rss->{items}} ) {
 			debug('rss contains: ' . $v->{title});
 			if ($v->{title} eq $rss_title) {
-				die('already have rss entry for ' . $rss_title);
+				error('already have rss entry for ' . $rss_title);
+				return undef;
 			}
 		}
 	} else {
 		info('starting new feed file ' . $feed_file);
 		$rss = XML::RSS->new(version => '1.0');
 		$rss->channel (
-			title => $m_main{name},
-			link => $m_main{git_upstream},
-			description => $m_main{summary},
+			title => $release->{name},
+			link => $release->{url},
+			description => $release->{summary},
 			dc => {
 				date => DateTime->now()->stringify(),
-				creator => $m_main{author_maintainer},
-				publisher => "$0 " . SemVer->new(VERSION). " (perl $^V)",
+				creator => $release->{author_maintainer},
+				publisher => "$0 " . SemVer->new(Bluto::Version::VERSION). " (perl $^V)",
 			},
 		#		subject    => "Linux Software",
 		#		creator    => 'scoop@freshmeat.net',
@@ -49,16 +66,19 @@ sub to_file() {
 	# check if we already have the title
 	foreach my $item ( $rss->{items}) {
 		if ( defined $item->[0] && $item->[0]{title} eq $rss_title ) {
-			die('already have published record for ' . $rss_title);
+			error('already have published record for ' . $rss_title);
+			return undef;
 		}
 	}
 
+	debug('outs '. $release->{url});
+
 	$rss->add_item (
 		title => $rss_title,
-		link => $targz,
-		description => $out,
+		link => $release->{src}[0],
+		description => $body,
 		dc => {
-			date => $m_main{time},
+			date => $release{time},
 		},
 	#  dc => {
 		#       subject  => "X11/Utilities",
@@ -70,7 +90,25 @@ sub to_file() {
 		#                               ]
 	);
 
-	$rss->save($feed_file);
+	return $rss;
+}
+
+sub to_string {
+	my $release = shift;
+	my $env = shift;
+	my $body = shift;
+
+	my $rss = process($release, $env, $body);
+	return $rss->as_string;
+}
+
+sub to_file {
+	my $release = shift;
+	my $env = shift;
+	my $body = shift;
+
+	my $rss = process($release, $env, $body);
+	$rss->save(get_feed_filepath($release, $env));
 }
 
 1;

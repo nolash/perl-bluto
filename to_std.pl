@@ -3,7 +3,6 @@
 use v5.10.1;
 use warnings;
 use strict;
-use constant { VERSION => '0.0.1' };
 
 # standard imports
 use Getopt::Long qw/ :config auto_help /;
@@ -60,7 +59,7 @@ if (!defined $version) {
 }
 
 my $announcement = Bluto::get_announcement(\%env);
-
-print($announcement);
+my $rss = Bluto::get_rss(\%env);
+print($rss);
 
 #my @change = $cfg->vars();
