@@ -13,8 +13,8 @@ my @m_tech;
 my @m_url;
 my @m_vcs;
 my @m_src;
-my @m_author_maintainer = [undef, undef];
-my @m_author_origin = [undef, undef];
+my @m_author_maintainer = [undef, undef, undef];
+my @m_author_origin = [undef, undef, undef];
 my %m_main = (
 	name => undef,
 	slug => undef,
@@ -51,20 +51,21 @@ sub from_config {
 	info('using version ' . $version);
 
 	$m_main{name} = $cfg->param('main.name');
-	#$m_main{version} = $cfg->param('main.version');
 	$m_main{version} = $version;
 	$m_main{slug} = $cfg->param('main.slug');
 	$m_main{summary} = $cfg->param('main.summary');
 	$m_main{license} = $cfg->param('main.license');
 	$m_main{url} = $cfg->param('main.url');
-	$m_main{author_maintainer}[0] = $cfg->param('author:maintainer.name') . " <" . $cfg->param('author:maintainer.email') . ">";
-	$m_main{author_maintainer}[1] = $cfg->param('author:maintainer.pgp');
+	$m_main{author_maintainer}[0] = $cfg->param('author:maintainer.name');
+	$m_main{author_maintainer}[1] = $m_main{author_maintainer}[0] . " <" . $cfg->param('author:maintainer.email') . ">";
+	$m_main{author_maintainer}[2] = $cfg->param('author:maintainer.pgp');
 
 	my $feed_file = File::Spec->catfile( $feed_dir, $m_main{slug} ) . ".rss";
 
 	if (!defined $cfg->param('author:origin')) {
 		$m_main{author_origin}[0] = $m_main{author_maintainer}[0];
 		$m_main{author_origin}[1] = $m_main{author_maintainer}[1];
+		$m_main{author_origin}[2] = $m_main{author_maintainer}[2];
 	}
 
 	if (defined $cfg->param('vcs.tag_prefix')) {
@@ -100,7 +101,7 @@ sub from_config {
 		return undef;
 	} 
 
-	my $targz = Bluto::Archive::create($m_main{slug}, $m_main{version}, $m_main{tag_prefix}, $env->{src_dir});
+	my $targz = Bluto::Archive::create($m_main{slug}, $m_main{version}, $m_main{author_maintainer}[2], $m_main{tag_prefix}, $env->{src_dir});
 	if (!defined $targz) {
 		return undef;
 	}
@@ -119,7 +120,7 @@ sub from_config {
 
 	if ($version_src =~ '^sha256:(.*)$' ) {
 		push(@changelog_candidates, $1);
-		debug('found sha256 changelog entry ' . $1 . ' for ' . $have_version_match . ' from ' . $fp);
+		debug('found sha256 changelog entry ' . $1 . ' for ' . $have_version_match);
 	} else {
 		push(@changelog_candidates, $version_src);
 	}

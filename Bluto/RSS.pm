@@ -47,7 +47,7 @@ sub process {
 			description => $release->{summary},
 			dc => {
 				date => DateTime->now()->stringify(),
-				creator => $release->{author_maintainer},
+				creator => $release->{author_maintainer}[0],
 				publisher => "$0 " . SemVer->new(Bluto::Version::VERSION). " (perl $^V)",
 			},
 		#		subject    => "Linux Software",
