@@ -213,8 +213,17 @@ sub from_config {
 		my $fp = File::Spec->catfile ( $env->{content_dir}, $fn );
 		if (open(my $f, "<$fp")) {
 			$m_main{changelog} = '';
-			while (<$f>) {
-				$m_main{changelog} .= $_;
+			my $i = 0;
+			while (!eof($f)) {
+				my $v = readline($f);
+				if ($v =~ /^[a-zA-Z0-9]/) {
+					chomp($v);
+					if ($i > 0) {
+						$m_main{changelog} .= "\n";
+					}
+					$m_main{changelog} .= '* ' . $v;
+				}
+				$i++;
 			}
 			close($f);
 			info('read changelog info from ' . $fp);
