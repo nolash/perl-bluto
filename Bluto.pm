@@ -186,6 +186,11 @@ sub from_config {
 		my $src = $m_main{slug} . '/' . basename($targz);
 		push(@m_src, $v . '/' . $src);
 	}
+	
+	if ($#m_src < 0) {
+		error('no source bundle prefixes defined');
+		return undef;
+	}
 
 	# process changelog entry
 	my $body = '';

@@ -30,9 +30,10 @@ sub seal {
 	close($f);
 
 	if (!defined $keygrip) {
+		warn('skipping signature due to missing key');
 		return $z;
 	}
-	
+
 	my @cmd = ('gpg', '-a', '-b', '-u', $keygrip, $hp);
 	system(@cmd);
 	if ($?) {
