@@ -22,7 +22,7 @@ my %m_main = (
 	summary => undef,
 	license => undef,
 	tag_prefix => VCS_TAG_PREFIX,
-	changelog => '',
+	changelog => undef,
 	time => undef,
 	tech_main => undef,
 	tech => \@m_tech,
@@ -36,13 +36,14 @@ my $have_version_match = undef;
 
 sub from_config {
 	my $cfg = shift;
-	my $src_dir = shift;
+	my $env = shift;
+
 	my $version;
 	if (defined $cfg->{version}) {
 		$version = $cfg->{version};
 	} else {
-		$fn = File::Spec->catfile($src_dir, 'VERSION');
-		open(my $f, "<$fn") or error("no version file found") && return undef;
+		$fn = File::Spec->catfile($env->{src_dir}, 'VERSION');
+		open(my $f, "<$fn") or error('no version file found: ' . $fn) && return undef;
 		$version = <$f>;
 		close($f);
 		$version = SemVer->new($version);
@@ -93,8 +94,12 @@ sub from_config {
 		}
 	}
 
-	
-	my $targz = Bluto::Archive::create($m_main{slug}, $m_main{version}, $m_main{tag_prefix}, $src_dir);
+	if (!defined $have_version_match) {
+		error("no changelog found for version " . $m_main{version});
+		return undef;
+	} 
+
+	my $targz = Bluto::Archive::create($m_main{slug}, $m_main{version}, $m_main{tag_prefix}, $env->{src_dir});
 	if (!defined $targz) {
 		return undef;
 	}
@@ -108,32 +113,53 @@ sub from_config {
 
 	# process changelog entry
 	my $body = '';
-	if (!defined $have_version_match) {
-		error("no changelog found for version " . $m_main{version});
-		return undef;
+	my $version_src = $cfg->param('changelog.' . $have_version_match);
+	my @changelog_candidates;
+
+	if ($version_src =~ '^sha256:(.*)$' ) {
+		push(@changelog_candidates, $1);
+		debug('found sha256 changelog entry ' . $1 . ' for ' . $have_version_match . ' from ' . $fp);
 	} else {
-		# TODO: else should look for targz filename dot txt and include literal
-		if ($cfg->param('changelog.' . $have_version_match) =~ '^sha256:(.*)$' ) {
-			my $fp = File::Spec->catfile ( $content_dir, $1 );
-			debug('resolve sha256 content ' . $1 . ' for ' . $have_version_match . ' from ' . $fp);
-			open(my $f, "<$fp") or die ('cannot open content read from: ' . $fp);
+		push(@changelog_candidates, $version_src);
+	}
+
+	push(@changelog_candidates, "CHANGELOG." . $have_version_match);
+	push(@changelog_candidates, "CHANGELOG/" . $have_version_match);
+	push(@changelog_candidates, "CHANGELOG/CHANGELOG." . $have_version_match);
+
+	# TODO: if have sha256, check against the contents
+	for my $fn (@changelog_candidates) {
+		my $fp = File::Spec->catfile ( $env->{content_dir}, $fn );
+		if (open(my $f, "<$fp")) {
+			$m_main{changelog} = '';
 			while (<$f>) {
 				$m_main{changelog} .= $_;
 			}
+			close($f);
+			info('read changelog info from ' . $fp);
+			last;
+		} else {
+		      debug('changelog candidate ' . $fp . ' not available: ' . $!);
 		}
 	}
 	
+	if (!defined $m_main{changelog}) {
+		error('changelog content empty after exhausting all options');
+	}
 
 	return $have_version_match;
 }
 
-sub get_announcement() {
+sub get_announcement {
+	my $env = shift;
 	my $tt = Template->new({
 		INCLUDE_PATH => '.',
 		INTERPOLATE => 1,
+		ABSOLUTE => 1,
 		});
 	my $out;
-	$tt->process('base.tt', \%m_main, \$out) or croak($tt->error());
+	$tt->process($env->{template_path}, \%m_main, \$out) or error('error processing template: '. $tt->error());
+	return $out;
 }
 
 1;

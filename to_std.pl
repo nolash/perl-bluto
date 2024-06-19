@@ -27,28 +27,40 @@ sub croak {
 
 # TODO: export to perl modules
 
-my $src_dir = File::Spec->catfile(getcwd, '.bluto');
-my $out_dir = getcwd;
-my $feed_dir = getcwd;
-my $content_dir = getcwd;
-GetOptions(
-	'd:s', \$src_dir,
-	'o:s', \$out_dir,
-	'f:s', \$feed_dir,
-	'c:s', \$content_dir,
+my %env = (
+	src_dir => File::Spec->catfile(getcwd, '.bluto'),
+	out_dir => getcwd,
+	feed_dir => getcwd,
+	content_dir => getcwd,
+	template_path => 'base.tt',
 );
-$src_dir = abs_path($src_dir);
+#my $src_dir = 
+#my $out_dir = getcwd;
+#my $feed_dir = getcwd;
+#my $content_dir = getcwd;
+GetOptions(
+	'd:s', \$env{src_dir},
+	'o:s', \$env{out_dir},
+	'f:s', \$env{feed_dir},
+	'c:s', \$env{content_dir},
+);
+foreach my $k (keys %env ) {
+	$env{$k} = abs_path($env{$k});
+	debug('environment "' . $k . '":  ' . $env{$k});
+}
 
-info("using ini dir " . $src_dir);
-
-my $fn = File::Spec->catfile($src_dir, 'bluto.ini');
+my $fn = File::Spec->catfile($env{src_dir}, 'bluto.ini');
 debug("import from " . $fn);
 my $cfg = new Config::Simple($fn);
 
-my $version = Bluto::from_config($cfg, $src_dir);
+my $version = Bluto::from_config($cfg, \%env);
 
 if (!defined $version) {
 	die("config processing failed");
 }
+
+my $announcement = Bluto::get_announcement(\%env);
+
+print($announcement);
 
 #my @change = $cfg->vars();
