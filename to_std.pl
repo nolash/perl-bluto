@@ -32,6 +32,7 @@ my %env = (
 	feed_dir => getcwd,
 	content_dir => getcwd,
 	template_path => 'base.tt',
+	engine => undef,
 );
 #my $src_dir = 
 #my $out_dir = getcwd;
@@ -44,7 +45,13 @@ GetOptions(
 	'c:s', \$env{content_dir},
 );
 foreach my $k (keys %env ) {
-	$env{$k} = abs_path($env{$k});
+	if (defined $env{$k}) {
+		$env{$k} = abs_path($env{$k});
+	}
+}
+
+$env{engine} = 'bluto v' . SemVer->new(Bluto::VERSION). " (perl $^V)";
+foreach my $k (keys %env ) {
 	debug('environment "' . $k . '":  ' . $env{$k});
 }
 

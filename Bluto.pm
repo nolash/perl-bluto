@@ -7,6 +7,7 @@ use Log::Term::Ansi qw/error info debug warn trace/;
 use Bluto::Archive;
 
 use constant { VCS_TAG_PREFIX => 'v' };
+use constant { VERSION => '0.0.1' };
 
 my %config;
 my @m_tech;
@@ -31,6 +32,7 @@ my %m_main = (
 	src => \@m_src,
 	author_maintainer => \@m_author_maintainer,
 	author_origin => \@m_author_origin,
+	engine => undef,
 );
 my $have_version_match = undef;
 
@@ -233,13 +235,17 @@ sub from_config {
 		}
 	}
 	
-	if (!defined $m_main{changelog}) {
+	if (!defined $m_main{changelog} || ref($m_main{changelog} eq 'ARRAY')) {
 		error('changelog content empty after exhausting all options');
+		return undef;
 	}
+
+	$m_main{engine} = $env->{engine};
 
 	for $k (keys %m_main) {
 		debug('release data: ' . $k . ': ' . $m_main{$k});
 	}
+
 
 	return $have_version_match;
 }

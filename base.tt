@@ -26,3 +26,7 @@ CHANGELOG
 ---
 
 [% changelog %]
+
+---
+
+Release generator: [% engine %]

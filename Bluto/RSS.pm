@@ -7,7 +7,6 @@ use XML::RSS;
 use Template;
 
 use Log::Term::Ansi qw/error info debug warn trace/;
-use Bluto::Version;
 
 
 sub get_feed_filepath {
@@ -48,7 +47,7 @@ sub process {
 			dc => {
 				date => DateTime->now()->stringify(),
 				creator => $release->{author_maintainer}[0],
-				publisher => "$0 " . SemVer->new(Bluto::Version::VERSION). " (perl $^V)",
+				publisher => $release->{author_maintainer}[0],
 			},
 		#		subject    => "Linux Software",
 		#		creator    => 'scoop@freshmeat.net',
