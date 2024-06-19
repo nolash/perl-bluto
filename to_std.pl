@@ -1,7 +1,9 @@
 #!/usr/bin/perl
 
+use v5.10.1;
 use warnings;
 use strict;
+use constant { VERSION => '0.0.1' };
 
 # standard imports
 use Getopt::Long qw/ :config auto_help /;
@@ -28,6 +30,9 @@ sub croak {
 # TODO: export to perl modules
 my %config;
 my @m_tech;
+my @m_url;
+my @m_vcs;
+my @m_src;
 my @m_author_maintainer = [undef, undef];
 my @m_author_origin = [undef, undef];
 my %m_main = (
@@ -35,37 +40,54 @@ my %m_main = (
 	slug => undef,
 	version => undef,
 	summary => undef,
+	license => undef,
 	changelog => '',
 	time => undef,
 	tech_main => undef,
 	tech => \@m_tech,
-	vcs_upstream => undef,
+	vcs => \@m_vcs,
+	url => \@m_url,
+	src => \@m_src,
 	author_maintainer => \@m_author_maintainer,
 	author_origin => \@m_author_origin,
 );
 
-my $ini_dir = File::Spec->catfile(getcwd, '.bluto');
+my $src_dir = File::Spec->catfile(getcwd, '.bluto');
 my $out_dir = getcwd;
 my $feed_dir = getcwd;
 my $content_dir = getcwd;
 GetOptions(
-	'd:s', \$ini_dir,
+	'd:s', \$src_dir,
 	'o:s', \$out_dir,
 	'f:s', \$feed_dir,
 	'c:s', \$content_dir,
 );
-$ini_dir = abs_path($ini_dir);
+$src_dir = abs_path($src_dir);
 
-info("using ini dir " . $ini_dir);
+info("using ini dir " . $src_dir);
 
-my $fn = File::Spec->catfile($ini_dir, 'bluto.ini');
+my $fn = File::Spec->catfile($src_dir, 'bluto.ini');
 debug("import from " . $fn);
 my $cfg = new Config::Simple($fn);
 
+my $version;
+if (defined $cfg->{version}) {
+	$version = $cfg->{version};
+} else {
+	$fn = File::Spec->catfile($src_dir, 'VERSION');
+	open(my $f, "<$fn") or die("no version file found");
+	$version = <$f>;
+	close($f);
+	$version = SemVer->new($version);
+}
+info('using version ' . $version);
+
 $m_main{name} = $cfg->param('main.name');
-$m_main{version} = $cfg->param('main.version');
+#$m_main{version} = $cfg->param('main.version');
+$m_main{version} = $version;
 $m_main{slug} = $cfg->param('main.slug');
 $m_main{summary} = $cfg->param('main.summary');
+$m_main{license} = $cfg->param('main.license');
 $m_main{author_maintainer}[0] = $cfg->param('author:maintainer.name') . " <" . $cfg->param('author:maintainer.email') . ">";
 $m_main{author_maintainer}[1] = $cfg->param('author:maintainer.pgp');
 
@@ -76,13 +98,15 @@ if (!defined $cfg->param('author:origin')) {
 	$m_main{author_origin}[1] = $m_main{author_maintainer}[1];
 }
 
-my @urls = $cfg->param('locate.url');
-my @gits = $cfg->param('locate.git');
-if ($#gits < 0) {
-	die('no vcs found');
+foreach my $v ( $cfg->param('locate.url') ) {
+	warn('not checking url formatting for ' . $v);
+	push(@m_url, $v);
 }
-$m_main{git_upstream} = $gits[0];
-my @change = $cfg->vars();
+
+foreach my $v ( $cfg->param('locate.vcs') ) {
+	warn('not checking git formatting for ' . $v);
+	push(@m_vcs, $v);
+}
 
 my $have_version_match = undef;
 foreach my $k ($cfg->vars()) {
@@ -97,12 +121,29 @@ foreach my $k ($cfg->vars()) {
 		}
 	}
 }
+my $targz = $m_main{slug} . '-' . $have_version_match . '.tar.gz';
+my $targz_local = File::Spec->catfile($src_dir, $targz);
+if (! -f $targz_local ) {
+	#croak("no package file found, looked for: " . $targz);
+	debug("no package file found, looked for: " . $targz);
+}
+my @targz_stat = stat ( $targz_local );
+$m_main{time} = DateTime->from_epoch( epoch => $targz_stat[9] )->stringify();
+foreach my $v ( $cfg->param('locate.tgzbase') ) {
+	warn('not checking targz base formatting for ' . $v);
+	my $src = $m_main{slug} . '/' . $targz;
+	push(@m_src, $v . '/' . $src);
+}
+
+my @change = $cfg->vars();
+
 
 # process changelog entry
 my $body = '';
 if (!defined $have_version_match) {
 	croak("no changelog found for version " . $m_main{version});
 } else {
+	# TODO: else should look for targz filename dot txt and include literal
 	if ($cfg->param('changelog.' . $have_version_match) =~ '^sha256:(.*)$' ) {
 		my $fp = File::Spec->catfile ( $content_dir, $1 );
 		debug('resolve sha256 content ' . $1 . ' for ' . $have_version_match . ' from ' . $fp);
@@ -114,15 +155,6 @@ if (!defined $have_version_match) {
 }
 
 
-my $targz = $m_main{slug} . '-' . $have_version_match . '.tar.gz';
-my $targz_local = File::Spec->catfile($ini_dir, $targz);
-if (! -f $targz_local ) {
-	#croak("no package file found, looked for: " . $targz);
-	debug("no package file found, looked for: " . $targz);
-}
-my @targz_stat = stat ( $targz_local );
-$m_main{time} = DateTime->from_epoch( epoch => $targz_stat[9] )->stringify();
-
 my $tt = Template->new({
 	INCLUDE_PATH => '.',
 	INTERPOLATE => 1,
@@ -130,20 +162,31 @@ my $tt = Template->new({
 my $out;
 $tt->process('base.tt', \%m_main, \$out) or croak($tt->error());
 
-my $rss;
 
+my $rss_title = $m_main{slug} . ' ' . $m_main{version};
+my $rss;
 $rss = XML::RSS->new;
 if ( -f $feed_file ) {
 	info('found existing feed file ' . $feed_file);
 	$rss->parsefile( $feed_file );
+	foreach my $v ( @{$rss->{items}} ) {
+		debug('rss contains: ' . $v->{title});
+		if ($v->{title} eq $rss_title) {
+			die('already have rss entry for ' . $rss_title);
+		}
+	}
 } else {
-	my $rss = XML::RSS->new(version => '1.0');
+	info('starting new feed file ' . $feed_file);
+	$rss = XML::RSS->new(version => '1.0');
 	$rss->channel (
 		title => $m_main{name},
 		link => $m_main{git_upstream},
 		description => $m_main{summary},
-	#	dc => {
-	#		date       => '2000-08-23T07:00+00:00',
+		dc => {
+			date => DateTime->now()->stringify(),
+			creator => $m_main{author_maintainer},
+			publisher => "$0 " . SemVer->new(VERSION). " (perl $^V)",
+		},
 	#		subject    => "Linux Software",
 	#		creator    => 'scoop@freshmeat.net',
 	#		publisher  => 'scoop@freshmeat.net',
@@ -156,8 +199,6 @@ if ( -f $feed_file ) {
 	#	               ]
 	);
 }
-
-my $rss_title = $m_main{slug} . ' ' . $m_main{version};
 
 # check if we already have the title
 foreach my $item ( $rss->{items}) {

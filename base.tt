@@ -1,8 +1,28 @@
-[% name %]
-===========
+Release announcement for [% name %]
+===
 
 Version release: [% version %]
+License: [% license %]
 
-foo bar baz
+Source bundles
+---
+
+[% FOREACH v IN src %]* [% v %]
+[% END %]
+
+VCS
+---
+
+[% FOREACH v IN vcs %]* [% v %]
+[% END %]
+
+ONLINE RESOURCES
+---
+
+[% FOREACH v IN url %]* [% v %]
+[% END %]
+
+CHANGELOG
+---
 
 [% changelog %]
