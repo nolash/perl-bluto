@@ -10,6 +10,14 @@ use Log::Term::Ansi qw/error info debug warn trace/;
 sub seal {
 	my $targz = shift;
 	my $keygrip = shift;
+	my $safe = shift;
+
+	if (!defined $keygrip) {
+		if ($safe) {
+			error('have no signing key and safe bit set');
+			return undef;
+		}
+	}
 
 	my $h = Digest::SHA->new('sha256');
 	$h->addfile($targz);
@@ -21,6 +29,10 @@ sub seal {
 	print $f $z . "\t" . basename($targz) . "\n";
 	close($f);
 
+	if (!defined $keygrip) {
+		return $z;
+	}
+	
 	my @cmd = ('gpg', '-a', '-b', '-u', $keygrip, $hp);
 	system(@cmd);
 	if ($?) {
@@ -38,6 +50,7 @@ sub create {
 	my $keygrip = shift;
 	my $git_prefix = shift;
 	my $src_dir = shift;
+	my $flags = shift;
 
 	my $old_dir = cwd;
 
@@ -46,7 +59,6 @@ sub create {
 	my $targz = $slug . '-' . $version . '.tar.gz';
 	my $targz_local = File::Spec->catfile($src_dir, $targz);
 	if (! -f $targz_local ) {
-		#croak("no package file found, looked for: " . $targz);
 		debug("no package file found, looked for: " . $targz);
 
 		my @cmd = ('git', 'archive', $git_prefix . $version, '--format', 'tar.gz', '-o', $targz);
@@ -69,20 +81,17 @@ sub create {
 			return undef;
 		}
 
-		my $seal = seal($targz_local, $keygrip);
+		my $seal = seal($targz_local, $keygrip, $flags & 1);
 		if (!defined $seal) {
 			error("failed sealing archive");
 			unlink($targz);
 			return undef;
 		}
 		info('sealed archive as sha256 ' . $seal . ' signed by ' . $keygrip);
-	
 	} else {
 		info("using existing package file: " . $targz);
 		warn("existing package file is not being checked in any way 8|");
 	}
-
-	
 
 	chdir($old_dir);
 	

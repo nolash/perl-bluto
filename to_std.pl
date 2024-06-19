@@ -53,7 +53,6 @@ debug("import from " . $fn);
 my $cfg = new Config::Simple($fn);
 
 my $version = Bluto::from_config($cfg, \%env);
-
 if (!defined $version) {
 	die("config processing failed");
 }

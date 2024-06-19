@@ -43,7 +43,7 @@ sub process {
 		$rss = XML::RSS->new(version => '1.0');
 		$rss->channel (
 			title => $release->{name},
-			link => $release->{url},
+			link => $release->{uri},
 			description => $release->{summary},
 			dc => {
 				date => DateTime->now()->stringify(),
@@ -70,8 +70,6 @@ sub process {
 			return undef;
 		}
 	}
-
-	debug('outs '. $release->{url});
 
 	$rss->add_item (
 		title => $rss_title,

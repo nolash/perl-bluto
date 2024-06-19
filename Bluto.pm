@@ -34,6 +34,71 @@ my %m_main = (
 );
 my $have_version_match = undef;
 
+sub _set_single {
+	my $cfg = shift;
+	my $cfg_k = shift;
+	my $main_k = shift;
+	my $need = shift;
+
+	my $v = $cfg->param($cfg_k);
+	if (ref($v) eq 'ARRAY') {
+		if ($#v < 0) {
+			debug('empty value not set: ' . $cfg_k);
+			$v = undef;
+		}
+	}
+
+	if ($need && !defined $v) {
+		error('required config key not set: ' . $cfg_k);
+		return 1;
+	}
+
+	$m_main{$main_k} = $v;
+
+	return 0;
+}
+
+sub _set_author {
+	my $cfg = shift;
+	my $k = shift;
+	my $need = shift;
+	my $name;
+	my $email;
+	my $pgp;
+
+	my $cfg_k = 'author:' . $k;
+	my $v = $cfg->param($cfg_k . '.name');
+	# TODO if if if...
+	if (defined $v) {
+		$name = $cfg->param($cfg_k . '.name');
+		if (ref($name) eq 'ARRAY') {
+			$v = undef;
+		} else {
+			$email = $cfg->param($cfg_k . '.email');
+			if (ref($email) eq 'ARRAY') {
+				$email = undef;
+			}
+			$pgp = $cfg->param($cfg_k . '.pgp');
+			if (ref($pgp) eq 'ARRAY') {
+				$pgp = undef;
+			}
+		}
+	}
+
+	if ($need && !defined $v) {
+		error('required author data not set: ' . $cfg_k);
+		return 1;
+	}
+
+	$m_main{'author_' . $k}[0] = $name;
+	if (defined $email) {
+		$m_main{'author_' . $k}[1] = $name . ' <' . $email . '>';
+	}
+	$m_main{'author_' . $k}[2] = $pgp;
+
+	return 0;
+}
+
 sub from_config {
 	my $cfg = shift;
 	my $env = shift;
@@ -50,30 +115,38 @@ sub from_config {
 	}
 	info('using version ' . $version);
 
-	$m_main{name} = $cfg->param('main.name');
 	$m_main{version} = $version;
-	$m_main{slug} = $cfg->param('main.slug');
-	$m_main{summary} = $cfg->param('main.summary');
-	$m_main{license} = $cfg->param('main.license');
-	$m_main{url} = $cfg->param('main.url');
-	$m_main{author_maintainer}[0] = $cfg->param('author:maintainer.name');
-	$m_main{author_maintainer}[1] = $m_main{author_maintainer}[0] . " <" . $cfg->param('author:maintainer.email') . ">";
-	$m_main{author_maintainer}[2] = $cfg->param('author:maintainer.pgp');
+	my $r = 0;
+	$r += _set_single($cfg, 'main.name', 'name', 1);
+	$r += _set_single($cfg, 'main.slug', 'slug', 1);
+	$r += _set_single($cfg, 'main.summary', 'summary', 1);
+	$r += _set_single($cfg, 'main.license', 'license', 1);
+	$r += _set_single($cfg, 'main.uri', 'uri', 1);
+	$r += _set_author($cfg, 'maintainer', 1);
+	if ($r) {
+		error('invalid configuration');
+		return undef;
+	}
 
+
+#	$m_main{author_maintainer}[0] = $cfg->param('author:maintainer.name');
+#	$m_main{author_maintainer}[1] = $m_main{author_maintainer}[0] . " <" . $cfg->param('author:maintainer.email') . ">";
+#	$m_main{author_maintainer}[2] = $cfg->param('author:maintainer.pgp');
+#
 	my $feed_file = File::Spec->catfile( $feed_dir, $m_main{slug} ) . ".rss";
 
-	if (!defined $cfg->param('author:origin')) {
-		$m_main{author_origin}[0] = $m_main{author_maintainer}[0];
-		$m_main{author_origin}[1] = $m_main{author_maintainer}[1];
-		$m_main{author_origin}[2] = $m_main{author_maintainer}[2];
-	}
+#	if (!defined $cfg->param('author:origin')) {
+#		$m_main{author_origin}[0] = $m_main{author_maintainer}[0];
+#		$m_main{author_origin}[1] = $m_main{author_maintainer}[1];
+#		$m_main{author_origin}[2] = $m_main{author_maintainer}[2];
+#	}
 
 	if (defined $cfg->param('vcs.tag_prefix')) {
 		$m_main{tag_prefix} = $cfg->param('vcs.tag_prefix');
 
 	}
 
-	foreach my $v ( $cfg->param('locate.url') ) {
+	foreach my $v ( $cfg->param('locate.www') ) {
 		warn('not checking url formatting for ' . $v);
 		push(@m_url, $v);
 	}
@@ -101,8 +174,9 @@ sub from_config {
 		return undef;
 	} 
 
-	my $targz = Bluto::Archive::create($m_main{slug}, $m_main{version}, $m_main{author_maintainer}[2], $m_main{tag_prefix}, $env->{src_dir});
+	my $targz = Bluto::Archive::create($m_main{slug}, $m_main{version}, $m_main{author_maintainer}[2], $m_main{tag_prefix}, $env->{src_dir}, 0);
 	if (!defined $targz) {
+		error('failed to generate archive');
 		return undef;
 	}
 	my @targz_stat = stat ( $targz );
@@ -147,6 +221,10 @@ sub from_config {
 	
 	if (!defined $m_main{changelog}) {
 		error('changelog content empty after exhausting all options');
+	}
+
+	for $k (keys %m_main) {
+		debug('release data: ' . $k . ': ' . $m_main{$k});
 	}
 
 	return $have_version_match;
