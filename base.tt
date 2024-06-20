@@ -1,11 +1,11 @@
-Release announcement for [% name %]
+Release announcement: [% name %]
 ===
 
 Version release: [% version %]
 License: [% license %]
 
 Source bundles
----
+--------------
 
 [% FOREACH v IN src %]* [% v %]
 [% END %]
@@ -17,16 +17,18 @@ VCS
 [% END %]
 
 ONLINE RESOURCES
----
+----------------
 
 [% FOREACH v IN url %]* [% v %]
 [% END %]
 
 CHANGELOG
----
+---------
 
 [% changelog %]
 
----
+-----
 
 Release generator: [% engine %]
+
+-----

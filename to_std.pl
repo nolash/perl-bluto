@@ -33,6 +33,7 @@ my %env = (
 	content_dir => getcwd,
 	template_path => 'base.tt',
 	engine => undef,
+	readme => undef,
 );
 #my $src_dir = 
 #my $out_dir = getcwd;
@@ -52,7 +53,13 @@ foreach my $k (keys %env ) {
 
 $env{engine} = 'bluto v' . SemVer->new(Bluto::VERSION). " (perl $^V)";
 foreach my $k (keys %env ) {
-	debug('environment "' . $k . '":  ' . $env{$k});
+	if (defined $env{$k}) {
+		debug('environment "' . $k . '":  ' . $env{$k});
+	}
+}
+
+if (Bluto::check_sanity(\%env)) {
+	croak('sanity check fail');
 }
 
 my $fn = File::Spec->catfile($env{src_dir}, 'bluto.ini');
@@ -64,7 +71,6 @@ if (!defined $version) {
 	die("config processing failed");
 }
 
-my $announcement = Bluto::get_announcement(\%env);
 my $rss = Bluto::get_rss(\%env);
 print($rss);
 

@@ -5,6 +5,7 @@ use SemVer;
 
 use Log::Term::Ansi qw/error info debug warn trace/;
 use Bluto::Archive;
+use Bluto::Announce;
 
 use constant { VCS_TAG_PREFIX => 'v' };
 use constant { VERSION => '0.0.1' };
@@ -101,6 +102,33 @@ sub _set_author {
 	return 0;
 }
 
+sub _check_readme {
+	my $env = shift;
+	my $f;
+	my $fp;
+
+	for my $fn (('README', 'README.txt', 'README.adoc', 'README.rst', 'README.md')) {
+		$fp = File::Spec->catfile($env->{src_dir}, $fn);
+		if ( -f $fp ) {
+			info('using readme file: ' . $fp);
+			$env{readme} = $fp;
+			return 0;
+		}
+	}
+
+	warn('no readme file found');
+	return 1;
+}
+
+sub check_sanity {
+	my $env = shift;
+	my $r = 0;
+
+	$r += _check_readme($env);	
+
+	return $r;
+}
+
 sub from_config {
 	my $cfg = shift;
 	my $env = shift;
@@ -110,7 +138,7 @@ sub from_config {
 		$version = $cfg->{version};
 	} else {
 		$fn = File::Spec->catfile($env->{src_dir}, 'VERSION');
-		open(my $f, "<$fn") or error('no version file found: ' . $fn) && return undef;
+		open(my $f, '<', $fn) or error('no version file found: ' . $fn) && return undef;
 		$version = <$f>;
 		close($f);
 		$version = SemVer->new($version);
@@ -213,7 +241,7 @@ sub from_config {
 	# TODO: if have sha256, check against the contents
 	for my $fn (@changelog_candidates) {
 		my $fp = File::Spec->catfile ( $env->{content_dir}, $fn );
-		if (open(my $f, "<$fp")) {
+		if (open(my $f, '<', $fp)) {
 			$m_main{changelog} = '';
 			my $i = 0;
 			while (!eof($f)) {
@@ -250,23 +278,10 @@ sub from_config {
 	return $have_version_match;
 }
 
-sub get_announcement {
-	my $env = shift;
-
-	my $tt = Template->new({
-		INCLUDE_PATH => '.',
-		INTERPOLATE => 1,
-		ABSOLUTE => 1,
-		});
-	my $out;
-	$tt->process($env->{template_path}, \%m_main, \$out) or error('error processing template: '. $tt->error());
-	return $out;
-}
-
 sub get_rss {
 	my $env = shift;
 
-	my $out = get_announcement($env);
+	my $out = Bluto::Announce::get_asciidoc(\%m_main, $env);
 
 	return Bluto::RSS::to_string(\%m_main, $env, $out);
 }
