@@ -111,7 +111,7 @@ sub _check_ini {
 		error('ini file not found: ' . $fp);
 		return 1;
 	}
-	info('using ini file: ' . $fp);
+	debug('using ini file: ' . $fp);
 	return 0;
 }
 
@@ -123,7 +123,7 @@ sub _check_readme {
 	for my $fn (('README', 'README.txt', 'README.adoc', 'README.rst', 'README.md')) {
 		$fp = File::Spec->catfile($env->{src_dir}, $fn);
 		if ( -f $fp ) {
-			info('using readme file: ' . $fp);
+			debug('using readme file: ' . $fp);
 			$env{readme} = $fp;
 			return 0;
 		}
@@ -131,6 +131,26 @@ sub _check_readme {
 
 	warn('no readme file found');
 	return 1;
+}
+
+sub _check_version {
+	my $env = shift;
+	my $f;
+	my $fp;
+
+	$fp = File::Spec->catfile($env->{src_dir}, 'VERSION');
+	if ($env->{version}) {
+		info('writing new explicit version ' . $env->{version} . ' to file: ' . $fp);
+		open($f, '>', $fp);
+		print $f $env->{version};
+		close($f);
+	}
+	if (! -f $fp ) {
+		error('no version file');
+		return 1;
+	}
+	debug('using version file: ' . $fp);
+	return 0;
 }
 
 sub _prepare_out {
@@ -146,6 +166,7 @@ sub check_sanity {
 
 	$r += _check_readme($env);	
 	$r += _check_ini($env);
+	$r += _check_version($env);
 
 	return $r;
 }
@@ -306,10 +327,31 @@ sub from_config {
 	return $have_version_match;
 }
 
-sub create_rss {
+sub create_announce {
 	my $env = shift;
+	my $f;
 
 	my $out = Bluto::Announce::get_asciidoc(\%m_main, $env);
+	if (!defined $out) {
+		return undef;
+	}
+
+	my $fp = File::Spec->catfile(Bluto::Tree->announce_path, $m_main{slug} . '.bluto.txt');
+	open($f, '>', $fp) or (error('cannot open announce file: ' . $!) && return undef);
+	print $f $out;
+	close($f);
+	debug('stored announce text file: ' . $fp);
+
+	return $fp;
+}
+
+sub create_rss {
+	my $env = shift;
+	my $out = shift;
+
+	if (!defined $out) {
+		$out = Bluto::Announce::get_asciidoc(\%m_main, $env);
+	}
 
 	#return Bluto::RSS::to_string(\%m_main, $env, $out);
 	return Bluto::RSS::to_file(\%m_main, $env, $out);

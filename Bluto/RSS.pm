@@ -7,7 +7,7 @@ use XML::RSS;
 use Template;
 
 use Log::Term::Ansi qw/error info debug warn trace/;
-use Bluto::Tree qw /announce_path/;
+use Bluto::Tree qw/announce_path/;
 
 
 sub get_feed_filepath {

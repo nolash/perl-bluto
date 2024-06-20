@@ -1,11 +1,11 @@
 package Bluto::Archive;
 
 use Cwd;
-use File::Basename qw/ basename fileparse /;
+use File::Basename qw/basename fileparse/;
 use Digest::SHA;
 
 use Log::Term::Ansi qw/error info debug warn trace/;
-use Bluto::Tree;
+use Bluto::Tree qw/release_path/;
 
 
 sub seal {
