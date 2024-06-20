@@ -6,9 +6,10 @@ use strict;
 
 # standard imports
 use Getopt::Long qw/ :config auto_help /;
-use File::Temp qw/ tempdir /;
+#use File::Temp qw/ tempdir /;
 use File::Basename qw/ dirname /;
 use File::Spec qw/ catfile /;
+use File::Path qw/ make_path /;
 use Cwd qw/ getcwd abs_path /;
 
 # external imports
@@ -28,17 +29,13 @@ sub croak {
 
 my %env = (
 	src_dir => File::Spec->catfile(getcwd, '.bluto'),
-	out_dir => getcwd,
-	feed_dir => getcwd,
+	out_dir => File::Spec->catfile(getcwd, 'bluto_build'),
+	feed_dir => undef,
 	content_dir => getcwd,
 	template_path => 'base.tt',
 	engine => undef,
 	readme => undef,
 );
-#my $src_dir = 
-#my $out_dir = getcwd;
-#my $feed_dir = getcwd;
-#my $content_dir = getcwd;
 GetOptions(
 	'd:s', \$env{src_dir},
 	'o:s', \$env{out_dir},
@@ -49,6 +46,10 @@ foreach my $k (keys %env ) {
 	if (defined $env{$k}) {
 		$env{$k} = abs_path($env{$k});
 	}
+}
+
+if (!defined $env{feed_dir}) {
+	$env{feed_dir} = $env{out_dir};
 }
 
 $env{engine} = 'bluto v' . SemVer->new(Bluto::VERSION). " (perl $^V)";
@@ -71,7 +72,9 @@ if (!defined $version) {
 	die("config processing failed");
 }
 
-my $rss = Bluto::get_rss(\%env);
-print($rss);
+my $rss = Bluto::create_rss(\%env);
+if (!defined $rss) {
+	die("rss processing failed");
+}
 
 #my @change = $cfg->vars();

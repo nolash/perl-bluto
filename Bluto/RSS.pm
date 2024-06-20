@@ -7,14 +7,16 @@ use XML::RSS;
 use Template;
 
 use Log::Term::Ansi qw/error info debug warn trace/;
+use Bluto::Tree qw /announce_path/;
 
 
 sub get_feed_filepath {
 	my $release = shift;
 	my $env = shift;
-	
+
 	my $fn = $release->{slug} . '.bluto.rss';
-	my $fp = File::Spec->catfile($env->{feed_dir}, $fn);
+	#my $fp = File::Spec->catfile($env->{feed_dir}, $fn);
+	my $fp = File::Spec->catfile(Bluto::Tree->announce_path, $fn);
 	return $fp;
 }
 
@@ -22,6 +24,7 @@ sub process {
 	my $release = shift;
 	my $env = shift;
 	my $body = shift;
+	my $force = 1;
 
 	my $rss_title = $release->{slug} . ' ' . $release->{version};
 	my $rss;
@@ -96,7 +99,9 @@ sub to_string {
 	my $body = shift;
 
 	my $rss = process($release, $env, $body);
-	return $rss->as_string;
+	if (!defined $rss) {
+		return undef;
+	}
 }
 
 sub to_file {
@@ -105,7 +110,11 @@ sub to_file {
 	my $body = shift;
 
 	my $rss = process($release, $env, $body);
+	if (!defined $rss) {
+		return undef;
+	}
 	$rss->save(get_feed_filepath($release, $env));
+	return get_feed_filepath($release, $env);
 }
 
 1;

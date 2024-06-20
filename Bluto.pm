@@ -6,18 +6,20 @@ use SemVer;
 use Log::Term::Ansi qw/error info debug warn trace/;
 use Bluto::Archive;
 use Bluto::Announce;
+use Bluto::Tree;
 
 use constant { VCS_TAG_PREFIX => 'v' };
 use constant { VERSION => '0.0.1' };
 
-my %config;
-my @m_tech;
-my @m_url;
-my @m_vcs;
-my @m_src;
-my @m_author_maintainer = [undef, undef, undef];
-my @m_author_origin = [undef, undef, undef];
-my %m_main = (
+our %config;
+our $have_version_match = undef;
+our @m_tech;
+our @m_url;
+our @m_vcs;
+our @m_src;
+our @m_author_maintainer = [undef, undef, undef];
+our @m_author_origin = [undef, undef, undef];
+our %m_main = (
 	name => undef,
 	slug => undef,
 	version => undef,
@@ -35,7 +37,6 @@ my %m_main = (
 	author_origin => \@m_author_origin,
 	engine => undef,
 );
-my $have_version_match = undef;
 
 sub _set_single {
 	my $cfg = shift;
@@ -102,6 +103,18 @@ sub _set_author {
 	return 0;
 }
 
+sub _check_ini {
+	my $env = shift;
+
+	my $fp = File::Spec->catfile($env->{src_dir}, 'bluto.ini');
+	if ( ! -f $fp ) {
+		error('ini file not found: ' . $fp);
+		return 1;
+	}
+	info('using ini file: ' . $fp);
+	return 0;
+}
+
 sub _check_readme {
 	my $env = shift;
 	my $f;
@@ -120,11 +133,19 @@ sub _check_readme {
 	return 1;
 }
 
+sub _prepare_out {
+	my $release = shift;
+	my $env = shift;
+
+	return Bluto::Tree::prepare($release, $env);
+}
+
 sub check_sanity {
 	my $env = shift;
 	my $r = 0;
 
 	$r += _check_readme($env);	
+	$r += _check_ini($env);
 
 	return $r;
 }
@@ -202,9 +223,16 @@ sub from_config {
 	if (!defined $have_version_match) {
 		error("no changelog found for version " . $m_main{version});
 		return undef;
-	} 
+	}
 
-	my $targz = Bluto::Archive::create($m_main{slug}, $m_main{version}, $m_main{author_maintainer}[2], $m_main{tag_prefix}, $env->{src_dir}, 0);
+	$r = _prepare_out(\%m_main, $env);
+	if ($r > 0) {
+		error('output location preparations fail');
+		return undef;	
+	}
+
+	#my $targz = Bluto::Archive::create($m_main{slug}, $m_main{version}, $m_main{author_maintainer}[2], $m_main{tag_prefix}, $env->{src_dir}, $env->{out_dir}, 0);
+	my $targz = Bluto::Archive::create(\%m_main, $env, 0);
 	if (!defined $targz) {
 		error('failed to generate archive');
 		return undef;
@@ -278,12 +306,13 @@ sub from_config {
 	return $have_version_match;
 }
 
-sub get_rss {
+sub create_rss {
 	my $env = shift;
 
 	my $out = Bluto::Announce::get_asciidoc(\%m_main, $env);
 
-	return Bluto::RSS::to_string(\%m_main, $env, $out);
+	#return Bluto::RSS::to_string(\%m_main, $env, $out);
+	return Bluto::RSS::to_file(\%m_main, $env, $out);
 }
 
 1;

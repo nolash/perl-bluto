@@ -1,16 +1,18 @@
 package Bluto::Archive;
 
 use Cwd;
-use File::Basename qw/ basename /;
+use File::Basename qw/ basename fileparse /;
 use Digest::SHA;
 
 use Log::Term::Ansi qw/error info debug warn trace/;
+use Bluto::Tree;
 
 
 sub seal {
 	my $targz = shift;
 	my $keygrip = shift;
-	my $safe = shift;
+	# TODO: intended to be numeric flags but now we just use the first bit to force sign or not
+	my $safe = shift; 
 
 	if (!defined $keygrip) {
 		if ($safe) {
@@ -46,27 +48,37 @@ sub seal {
 }
 
 sub create {
-	my $slug = shift;
-	my $version = shift;
-	my $keygrip = shift;
-	my $git_prefix = shift;
-	my $src_dir = shift;
+	my $release = shift;
+	my $env = shift;
 	my $flags = shift;
+
+	my $keygrip = $release->{author_maintainer}[2];
 
 	my $old_dir = cwd;
 
-	chdir($src_dir);
+	chdir($env->{src_dir});
 
-	my $targz = $slug . '-' . $version . '.tar.gz';
-	my $targz_local = File::Spec->catfile($src_dir, $targz);
+	my $targz_local = undef;
+	my $targz_stem = $release->{slug} . '-' . $release->{version};
+
+	my $rev = `git rev-parse HEAD --abbrev-ref`;
+	if (!defined $rev) {
+		error('unable to determine revision');
+		chdir($old_dir);
+		return undef;
+	}
+	chomp($rev);
+	my $targz = $targz_stem . '+build.' . $rev . '.tar.gz';
+	$targz_local = File::Spec->catfile(Bluto::Tree->release_path, $targz);
+
 	if (! -f $targz_local ) {
-		debug("no package file found, looked for: " . $targz);
-
-		my @cmd = ('git', 'archive', $git_prefix . $version, '--format', 'tar.gz', '-o', $targz);
+		debug("no package file found, looked for: " . $targz_local);
+		my @cmd = ('git', 'archive', $release->{tag_prefix} . $release->{version}, '--format', 'tar.gz', '-o', $targz_local);
 		system(@cmd);
 		if ($?) {
 			error("package file generation fail: " . $e);
 			unlink($targz);
+			chdir($old_dir);
 			return undef;
 		}
 
@@ -79,18 +91,20 @@ sub create {
 
 		if (! -f $targz_local ) {
 			error("package generation reported ok but still no file");
+			chdir($old_dir);
 			return undef;
 		}
 
 		my $seal = seal($targz_local, $keygrip, $flags & 1);
 		if (!defined $seal) {
 			error("failed sealing archive");
-			unlink($targz);
+			unlink($targz_local);
+			chdir($old_dir);
 			return undef;
 		}
 		info('sealed archive as sha256 ' . $seal . ' signed by ' . $keygrip);
 	} else {
-		info("using existing package file: " . $targz);
+		info("using existing package file: " . $targz_local);
 		warn("existing package file is not being checked in any way 8|");
 	}
 
