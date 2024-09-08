@@ -73,12 +73,13 @@ sub process {
 		}
 	}
 
+	print "releasetime ". $release->{time} . "\n";
 	$rss->add_item (
 		title => $rss_title,
 		link => $release->{src}[0],
 		description => $body,
 		dc => {
-			date => $release{time},
+			date => $release->{time},
 		},
 	#  dc => {
 		#       subject  => "X11/Utilities",

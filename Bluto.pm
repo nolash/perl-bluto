@@ -121,7 +121,7 @@ sub _check_readme {
 	my $fp;
 
 	for my $fn (('README', 'README.txt', 'README.adoc', 'README.rst', 'README.md')) {
-		$fp = File::Spec->catfile($env->{src_dir}, $fn);
+		$fp = File::Spec->catfile($env->{content_dir}, $fn);
 		if ( -f $fp ) {
 			debug('using readme file: ' . $fp);
 			$env{readme} = $fp;
@@ -138,7 +138,7 @@ sub _check_version {
 	my $f;
 	my $fp;
 
-	$fp = File::Spec->catfile($env->{src_dir}, 'VERSION');
+	$fp = File::Spec->catfile($env->{content_dir}, 'VERSION');
 	if ($env->{version}) {
 		info('writing new explicit version ' . $env->{version} . ' to file: ' . $fp);
 		open($f, '>', $fp);
@@ -179,7 +179,7 @@ sub from_config {
 	if (defined $cfg->{version}) {
 		$version = $cfg->{version};
 	} else {
-		$fn = File::Spec->catfile($env->{src_dir}, 'VERSION');
+		$fn = File::Spec->catfile($env->{content_dir}, 'VERSION');
 		open(my $f, '<', $fn) or error('no version file found: ' . $fn) && return undef;
 		$version = <$f>;
 		close($f);

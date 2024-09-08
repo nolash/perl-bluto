@@ -1,7 +1,7 @@
 package Bluto::Tree;
 
 
-use File::Spec qw/ catfile /;
+use File::Spec;
 use File::Path qw/ make_path /;
 
 our $_release_path;

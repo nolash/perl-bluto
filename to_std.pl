@@ -8,7 +8,7 @@ use strict;
 use Getopt::Long qw/ :config auto_help /;
 #use File::Temp qw/ tempdir /;
 use File::Basename qw/ dirname /;
-use File::Spec qw/ catfile /;
+use File::Spec;
 use File::Path qw/ make_path /;
 use Cwd qw/ getcwd abs_path /;
 use lib (dirname(abs_path($0)));
