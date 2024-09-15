@@ -48,6 +48,7 @@ sub process {
 			title => $release->{name},
 			link => $release->{uri},
 			description => $release->{summary},
+			guid => $release->{uri},
 			dc => {
 				date => DateTime->now()->stringify(),
 				creator => $release->{author_maintainer}[0],

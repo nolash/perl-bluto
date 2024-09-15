@@ -70,7 +70,7 @@ sub create {
 	}
 	chomp($rev);
 	my $targz = $targz_stem . '+build.' . $rev . '.tar.gz';
-	my $targz_base = File::Spec->catfile(Bluto::Tree->release_path, $release->{slug});
+	my $targz_base = File::Spec->catfile(Bluto::Tree->release_path);
 	make_path($targz_base);
 	$targz_local = File::Spec->catfile($targz_base, $targz);
 

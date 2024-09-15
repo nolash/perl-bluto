@@ -338,7 +338,7 @@ sub create_announce {
 		return undef;
 	}
 
-	my $fp_base = File::Spec->catfile(Bluto::Tree->announce_path, $m_main{slug});
+	my $fp_base = File::Spec->catfile(Bluto::Tree->announce_path);
 	make_path($fp_base);
 	my $fp = File::Spec->catfile($fp_base, $m_main{slug} . '-' . $m_main{version} . '.bluto.txt');
 	open($f, '>', $fp) or (error('cannot open announce file: ' . $!) && return undef);
