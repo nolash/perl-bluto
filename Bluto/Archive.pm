@@ -6,6 +6,7 @@ use Digest::SHA;
 
 use Log::Term::Ansi qw/error info debug warn trace/;
 use Bluto::Tree qw/release_path/;
+use File::Path qw / make_path /;
 
 
 sub seal {
@@ -56,7 +57,7 @@ sub create {
 
 	my $old_dir = cwd;
 
-	chdir($env->{src_dir});
+	chdir($env->{content_dir});
 
 	my $targz_local = undef;
 	my $targz_stem = $release->{slug} . '-' . $release->{version};
@@ -69,7 +70,9 @@ sub create {
 	}
 	chomp($rev);
 	my $targz = $targz_stem . '+build.' . $rev . '.tar.gz';
-	$targz_local = File::Spec->catfile(Bluto::Tree->release_path, $targz);
+	my $targz_base = File::Spec->catfile(Bluto::Tree->release_path, $release->{slug});
+	make_path($targz_base);
+	$targz_local = File::Spec->catfile($targz_base, $targz);
 
 	if (! -f $targz_local ) {
 		debug("no package file found, looked for: " . $targz_local);

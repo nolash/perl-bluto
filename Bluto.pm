@@ -7,6 +7,7 @@ use Log::Term::Ansi qw/error info debug warn trace/;
 use Bluto::Archive;
 use Bluto::Announce;
 use Bluto::Tree;
+use File::Path qw / make_path /;
 
 use constant { VCS_TAG_PREFIX => 'v' };
 use constant { VERSION => '0.0.1' };
@@ -25,6 +26,7 @@ our %m_main = (
 	version => undef,
 	summary => undef,
 	license => undef,
+	copyright => undef,
 	tag_prefix => VCS_TAG_PREFIX,
 	changelog => undef,
 	time => undef,
@@ -193,6 +195,7 @@ sub from_config {
 	$r += _set_single($cfg, 'main.slug', 'slug', 1);
 	$r += _set_single($cfg, 'main.summary', 'summary', 1);
 	$r += _set_single($cfg, 'main.license', 'license', 1);
+	$r += _set_single($cfg, 'main.copyright', 'copyright', 1);
 	$r += _set_single($cfg, 'main.uri', 'uri', 1);
 	$r += _set_author($cfg, 'maintainer', 1);
 	if ($r) {
@@ -282,14 +285,13 @@ sub from_config {
 	} else {
 		push(@changelog_candidates, $version_src);
 	}
-
 	push(@changelog_candidates, "CHANGELOG." . $have_version_match);
 	push(@changelog_candidates, "CHANGELOG/" . $have_version_match);
 	push(@changelog_candidates, "CHANGELOG/CHANGELOG." . $have_version_match);
 
 	# TODO: if have sha256, check against the contents
 	for my $fn (@changelog_candidates) {
-		my $fp = File::Spec->catfile ( $env->{content_dir}, $fn );
+		my $fp = File::Spec->catfile ( $env->{src_dir}, $fn );
 		if (open(my $f, '<', $fp)) {
 			$m_main{changelog} = '';
 			my $i = 0;
@@ -336,7 +338,9 @@ sub create_announce {
 		return undef;
 	}
 
-	my $fp = File::Spec->catfile(Bluto::Tree->announce_path, $m_main{slug} . '.bluto.txt');
+	my $fp_base = File::Spec->catfile(Bluto::Tree->announce_path, $m_main{slug});
+	make_path($fp_base);
+	my $fp = File::Spec->catfile($fp_base, $m_main{slug} . '-' . $m_main{version} . '.bluto.txt');
 	open($f, '>', $fp) or (error('cannot open announce file: ' . $!) && return undef);
 	print $f $out;
 	close($f);

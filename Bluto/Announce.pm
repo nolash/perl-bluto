@@ -77,6 +77,8 @@ Version release: [% version %]
 
 License: [% license %]
 
+Copyright: [% copyright %]
+
 Source bundles
 --------------
 

@@ -2,7 +2,7 @@ package Bluto::Tree;
 
 
 use File::Spec;
-use File::Path qw/ make_path /;
+use File::Path qw / make_path /;
 
 our $_release_path;
 our $_announce_path;
@@ -18,10 +18,10 @@ sub prepare {
 	my $release = shift;
 	my $env = shift;
 
-	$_release_path = File::Spec->catfile($env->{out_dir}, $release->{slug}, 'release');
-	File::Path->make_path(release_path);
+	$_release_path = File::Spec->catfile($env->{out_dir}, $release->{slug}, 'src');
+	make_path(release_path);
 	$_announce_path = File::Spec->catfile($env->{out_dir}, $release->{slug}, 'announce');
-	File::Path->make_path(announce_path);
+	make_path(announce_path);
 
 	return 0;
 }
