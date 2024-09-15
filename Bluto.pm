@@ -351,10 +351,10 @@ sub create_announce {
 
 sub create_rss {
 	my $env = shift;
-	my $out = shift;
 
+	my $out = Bluto::Announce::get_asciidoc(\%m_main, $env);
 	if (!defined $out) {
-		$out = Bluto::Announce::get_asciidoc(\%m_main, $env);
+		return undef;
 	}
 
 	#return Bluto::RSS::to_string(\%m_main, $env, $out);

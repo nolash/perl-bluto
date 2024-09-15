@@ -26,6 +26,7 @@ sub process {
 	my $body = shift;
 	my $force = 1;
 
+	$body =~ s#\n#<br/>#mg;
 	my $rss_title = $release->{slug} . ' ' . $release->{version};
 	my $rss;
 	$rss = XML::RSS->new;
@@ -73,7 +74,7 @@ sub process {
 		}
 	}
 
-	print "releasetime ". $release->{time} . "\n";
+	info("releasetime ". $release->{time} . "\n");
 	$rss->add_item (
 		title => $rss_title,
 		link => $release->{src}[0],
@@ -115,6 +116,7 @@ sub to_file {
 		return undef;
 	}
 	$rss->save(get_feed_filepath($release, $env));
+
 	return get_feed_filepath($release, $env);
 }
 

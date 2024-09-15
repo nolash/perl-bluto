@@ -2,6 +2,8 @@ package Bluto::Announce;
 
 use Log::Term::Ansi qw/error info debug warn trace/;
 
+my $pos;
+
 sub _adapt_headings {
 	my $f;
 	my $last = undef;
@@ -54,12 +56,17 @@ sub get_asciidoc {
 		}
 	} else {
 		debug("no template specified, using default");
-		my $tpl = do { local $/; <Bluto::Announce::DATA> };
+		if (!defined $pos) {
+			$pos = tell(Bluto::Announce::DATA);
+		}
+		seek(Bluto::Announce::DATA, $pos, 0);
+		my $tpl = do { local $/; <Bluto::Announce::DATA>};
 		if (!$tt->process(\$tpl, $release, \$v)) {
 			error('error processing default template (sorry!!): '. $tt->error());
 			$v = undef;
 		}
 	}
+
 
 	$v = _adapt_headings($v);
 

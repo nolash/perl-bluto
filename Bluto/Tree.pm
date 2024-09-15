@@ -18,9 +18,9 @@ sub prepare {
 	my $release = shift;
 	my $env = shift;
 
-	$_release_path = File::Spec->catfile($env->{out_dir}, $release->{slug}, 'src');
+	$_release_path = File::Spec->catfile($env->{out_dir}, 'src', $release->{slug});
 	make_path(release_path);
-	$_announce_path = File::Spec->catfile($env->{out_dir}, $release->{slug}, 'announce');
+	$_announce_path = File::Spec->catfile($env->{out_dir}, 'announce', $release->{slug});
 	make_path(announce_path);
 
 	return 0;
