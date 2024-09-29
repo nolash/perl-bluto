@@ -80,6 +80,7 @@ __DATA__
 Release announcement: [% name %]
 ===
 
+
 Version release: [% version %]
 
 License: [% license %]

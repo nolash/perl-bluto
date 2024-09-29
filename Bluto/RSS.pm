@@ -80,6 +80,7 @@ sub process {
 		title => $rss_title,
 		link => $release->{src}[0],
 		description => $body,
+		mode => 'insert',
 		dc => {
 			date => $release->{time},
 		},
