@@ -62,7 +62,8 @@ sub create {
 	my $targz_local = undef;
 	my $targz_stem = $release->{slug} . '-' . $release->{version};
 
-	my $rev = `git rev-parse HEAD --abbrev-ref`;
+	my $rev_version = $release->{tag_prefix} . $release->{version};
+	my $rev = `git rev-parse $rev_version --abbrev-ref`;
 	if (!defined $rev) {
 		error('unable to determine revision');
 		chdir($old_dir);

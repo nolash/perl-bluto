@@ -218,7 +218,6 @@ sub from_config {
 
 	if (defined $cfg->param('vcs.tag_prefix')) {
 		$m_main{tag_prefix} = $cfg->param('vcs.tag_prefix');
-
 	}
 
 	foreach my $v ( $cfg->param('locate.www') ) {
