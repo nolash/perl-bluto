@@ -50,8 +50,8 @@ sub process {
 			guid => $release->{uri},
 			dc => {
 				date => DateTime->now()->stringify(),
-				creator => $release->{author_maintainer}[0],
-				publisher => $release->{author_maintainer}[0],
+				creator => $release->{_author_maintainer}[0],
+				publisher => $release->{_author_maintainer}[0],
 			},
 		#		subject    => "Linux Software",
 		#		creator    => 'scoop@freshmeat.net',

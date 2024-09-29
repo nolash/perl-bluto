@@ -53,7 +53,8 @@ sub create {
 	my $env = shift;
 	my $flags = shift;
 
-	my $keygrip = $release->{author_maintainer}[2];
+	my $keygrip = $release->{_author_maintainer}->[2];
+	debug('using keygrip: ' . $keygrip);
 
 	my $old_dir = cwd;
 

@@ -9,7 +9,7 @@ use Bluto::Announce;
 use Bluto::Tree;
 use File::Path qw / make_path /;
 
-use Log::Term::Ansi qw/debug/;
+use Log::Term::Ansi qw/info debug/;
 
 use constant { VCS_TAG_PREFIX => 'v' };
 use constant { VERSION => '0.0.1' };
@@ -33,11 +33,13 @@ our %m_main = (
 	tag_prefix => VCS_TAG_PREFIX,
 	changelog => undef,
 	time => undef,
-	tech_main => undef,
-	tech => \@m_tech,
+	#tech_main => undef,
+	tech => undef,
 	vcs => \@m_vcs,
-	url => \@m_url,
 	src => \@m_src,
+	uri => undef,
+	url => \@m_url,
+	_author_maintainer => undef,
 	author_maintainer => undef,
 	author_origin => undef,
 	contributors => \@m_contributors,
@@ -50,7 +52,7 @@ sub _set_single {
 	my $main_k = shift;
 	my $need = shift;
 
-	my $v = $cfg->param($cfg_k);
+	my $v = $cfg->{$cfg_k};
 	if (ref($v) eq 'ARRAY') {
 		if ($#v < 0) {
 			debug('empty value not set: ' . $cfg_k);
@@ -95,20 +97,20 @@ sub _set_triple {
 	my $email;
 	my $pgp;
 	
-	$m_main{'_' . $pfx . '_' . $k} = [];
-	my $cfg_k = $pfx . ':' . $k;
-	my $v = $cfg->param($cfg_k . '.name');
+	#$m_main{'_' . $pfx . '_' . $k} = [];
+	#my $cfg_k = $pfx . ':' . $k;
+	my $v = $cfg->{$k}->{name};
 	# TODO if if if...
 	if (defined $v) {
-		$name = $cfg->param($cfg_k . '.name');
+		$name = $cfg->{$k}->{name};
 		if (ref($name) eq 'ARRAY') {
 			$v = undef;
 		} else {
-			$email = $cfg->param($cfg_k . '.email');
+			$email = $cfg->{$k}->{email};
 			if (ref($email) eq 'ARRAY') {
 				$email = undef;
 			}
-			$pgp = $cfg->param($cfg_k . '.pgp');
+			$pgp = $cfg->{$k}->{pgp};
 			if (ref($pgp) eq 'ARRAY') {
 				$pgp = undef;
 			}
@@ -125,9 +127,7 @@ sub _set_triple {
 		$m_main{'_' . $pfx . '_' . $k}[1] = $name . ' <' . $email . '>';
 	}
 	$m_main{'_' . $pfx . '_' . $k}[2] = $pgp;
-	$m_main{$pfx . '_' . $k} = $v;
-	debug('kkkvvv ' . $pfx . '_' . $k);
-
+	$m_main{$pfx . '_' . $k} = $name;
 	return 0;
 }
 
@@ -197,6 +197,125 @@ sub check_sanity {
 	$r += _check_version($env);
 
 	return $r;
+}
+
+sub from_yaml {
+	my $cfg_m = shift;
+	my $cfg_v = shift;
+	my $env = shift;
+
+	my $version;
+	if (!defined $env->{version}) {
+		die "version missing";
+	}
+	$version = $env->{version};
+	info('using version ' . $version);
+	$m_main{version} = $version;
+
+	$r += _set_single($cfg_m, 'name', 'name', 1);
+	$r += _set_single($cfg_m, 'slug', 'slug', 1);
+	$r += _set_single($cfg_m, 'summary', 'summary', 1);
+	$r += _set_single($cfg_m, 'license', 'license', 1);
+	$r += _set_single($cfg_m, 'copyright', 'copyright', 1);
+	$r += _set_single($cfg_m, 'tech', 'tech', 1);
+	$r += _set_author($cfg_m, 'maintainer', undef, 1);
+	if ($r) {
+		error('invalid configuration');
+		return undef;
+	}
+
+	if (defined $cfg_m->{vcs}->{tag_prefix}) {
+		$m_main{tag_prefix} = $cfg_m->{vcs}->{tag_prefix};
+	}
+
+	foreach my $v (@{$cfg_m->{locate}->{www}}) {
+		warn('not checking url formatting for ' . $v);
+		push(@m_url, $v);
+	}
+
+	foreach my $v (@{$cfg_m->{locate}->{vcs}}) {
+		warn('not checking git formatting for ' . $v);
+		push(@m_vcs, $v);
+	}
+
+	debug("contributor list: " . $cfg_v->{contributors});
+	foreach my $v (@{$cfg_v->{contributors}}) {
+		debug('have contributor: ' . $v);
+		push(@m_contributors, $v);
+	}
+
+	foreach my $v(@{$cfg_m->{locate}->{www}}) {
+		if (!defined $m_main{uri}) {
+			$m_main{uri} = $v;
+		}
+		push(@m_uri, $v);
+	}
+
+	foreach my $v(@{$cfg_m->{locate}->{rel}}) {
+		push(@m_uri, $v);
+	}
+
+	# TODO: simplify now that changelog file is explicitly named	
+	# TODO: if have sha256, check against the contents
+	push(@changelog_candidates, "CHANGELOG." . $m_main{version});
+	for my $fn (@changelog_candidates) {
+		my $fp = File::Spec->catfile ( $env->{src_dir}, $fn );
+		if (open(my $f, '<', $fp)) {
+			$m_main{changelog} = '';
+			my $i = 0;
+			while (!eof($f)) {
+				my $v = readline($f);
+				if ($v =~ /^[a-zA-Z0-9]/) {
+					chomp($v);
+					if ($i > 0) {
+						$m_main{changelog} .= "\n";
+					}
+					$m_main{changelog} .= '* ' . $v;
+				}
+				$i++;
+			}
+			close($f);
+			info('read changelog info from ' . $fp);
+			last;
+		} else {
+		      debug('changelog candidate ' . $fp . ' not available: ' . $!);
+		}
+	}
+
+	$r = _prepare_out(\%m_main, $env);
+	if ($r > 0) {
+		error('output location preparations fail');
+		return undef;	
+	}
+
+	#my $targz = Bluto::Archive::create($m_main{slug}, $m_main{version}, $m_main{author_maintainer}[2], $m_main{tag_prefix}, $env->{src_dir}, $env->{out_dir}, 0);
+	my $targz = Bluto::Archive::create(\%m_main, $env, 1);
+	if (!defined $targz) {
+		error('failed to generate archive');
+		return undef;
+	}
+	my @targz_stat = stat ( $targz );
+	$m_main{time} = DateTime->from_epoch( epoch => $targz_stat[9] )->stringify();
+	foreach my $v ( $cfg->{locate}->{tgzbase}) {
+		warn('not checking targz base formatting for ' . $v);
+		my $src = $m_main{slug} . '/' . basename($targz);
+		push(@m_src, $v . '/' . $src);
+	}
+	
+	if ($#m_src < 0) {
+		error('no source bundle prefixes defined');
+		return undef;
+	}
+
+	$m_main{engine} = $env->{engine};
+
+	for $k (keys %m_main) {
+		if ($k =~ /^[^_].*/) {
+			debug('release data: ' . $k . ': ' . $m_main{$k});
+		}
+	}
+
+	return $m_main{version};
 }
 
 sub from_config {
