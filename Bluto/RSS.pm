@@ -49,6 +49,9 @@ sub process {
 			description => $release->{summary},
 			guid => $release->{uri},
 			dc => {
+				subject => $release->{name},
+				rights => 'Copyright ' . $release->{copyright} . ' (License: ' . $release->{license} . ')',
+				license => $release->{license},
 				date => DateTime->now()->stringify(),
 				creator => $release->{_author_maintainer}[0],
 				publisher => $release->{_author_maintainer}[0],

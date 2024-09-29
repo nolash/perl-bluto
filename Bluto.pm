@@ -131,15 +131,17 @@ sub _set_triple {
 	return 0;
 }
 
-sub _check_ini {
+#sub _check_ini {
+sub _check_yml {
 	my $env = shift;
 
-	my $fp = File::Spec->catfile($env->{src_dir}, 'bluto.ini');
+	#my $fp = File::Spec->catfile($env->{src_dir}, 'bluto.ini');
+	my $fp = File::Spec->catfile($env->{src_dir}, 'bluto.yml');
 	if ( ! -f $fp ) {
-		error('ini file not found: ' . $fp);
+		error('yml file not found: ' . $fp);
 		return 1;
 	}
-	debug('using ini file: ' . $fp);
+	debug('using yml file: ' . $fp);
 	return 0;
 }
 
@@ -193,7 +195,8 @@ sub check_sanity {
 	my $r = 0;
 
 	$r += _check_readme($env);	
-	$r += _check_ini($env);
+	#$r += _check_ini($env);
+	$r += _check_yml($env);
 	$r += _check_version($env);
 
 	return $r;
