@@ -1,5 +1,7 @@
 package Bluto::Announce;
 
+use Template;
+
 use Log::Term::Ansi qw/error info debug warn trace/;
 
 my $pos;
@@ -67,7 +69,6 @@ sub get_asciidoc {
 		}
 	}
 
-
 	$v = _adapt_headings($v);
 
 	return $v;
@@ -87,6 +88,8 @@ License: [% license %]
 
 Copyright: [% copyright %]
 
+Author: [% author_maintainer %]
+
 Source bundles
 --------------
 
@@ -105,6 +108,12 @@ ONLINE RESOURCES
 [% FOREACH v IN url %]* [% v %]
 [% END %]
 
+[% IF contributors %]CONTRIBUTORS IN THIS VERSION
+----------------------------
+
+[% FOREACH v IN contributors %]* [% v %]
+[% END %]
+[% END %]
 CHANGELOG
 ---------
 

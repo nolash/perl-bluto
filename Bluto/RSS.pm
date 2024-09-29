@@ -4,7 +4,6 @@ use File::Spec;
 use DateTime;
 
 use XML::RSS;
-use Template;
 
 use Log::Term::Ansi qw/error info debug warn trace/;
 use Bluto::Tree qw/announce_path/;

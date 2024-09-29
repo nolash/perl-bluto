@@ -9,6 +9,8 @@ use Bluto::Announce;
 use Bluto::Tree;
 use File::Path qw / make_path /;
 
+use Log::Term::Ansi qw/debug/;
+
 use constant { VCS_TAG_PREFIX => 'v' };
 use constant { VERSION => '0.0.1' };
 
@@ -18,8 +20,9 @@ our @m_tech;
 our @m_url;
 our @m_vcs;
 our @m_src;
-our @m_author_maintainer = [undef, undef, undef];
-our @m_author_origin = [undef, undef, undef];
+our @m_contributors;
+#our @m_author_maintainer = [undef, undef, undef];
+#our @m_author_origin = [undef, undef, undef];
 our %m_main = (
 	name => undef,
 	slug => undef,
@@ -35,8 +38,9 @@ our %m_main = (
 	vcs => \@m_vcs,
 	url => \@m_url,
 	src => \@m_src,
-	author_maintainer => \@m_author_maintainer,
-	author_origin => \@m_author_origin,
+	author_maintainer => undef,
+	author_origin => undef,
+	contributors => \@m_contributors,
 	engine => undef,
 );
 
@@ -64,15 +68,35 @@ sub _set_single {
 	return 0;
 }
 
+
 sub _set_author {
+	my $cfg = shift;
+	my $k = shift;
+	my $need = shift;
+
+	return _set_triple('author', $cfg, $k, $need);
+}
+
+sub _set_contributor {
+	my $cfg = shift;
+	my $v = shift;
+	my $k = shift;
+	my $need = shift;
+
+	return _set_triple('contributor', $cfg, $k, $need);
+}
+
+sub _set_triple {
+	my $pfx = shift;
 	my $cfg = shift;
 	my $k = shift;
 	my $need = shift;
 	my $name;
 	my $email;
 	my $pgp;
-
-	my $cfg_k = 'author:' . $k;
+	
+	$m_main{'_' . $pfx . '_' . $k} = [];
+	my $cfg_k = $pfx . ':' . $k;
 	my $v = $cfg->param($cfg_k . '.name');
 	# TODO if if if...
 	if (defined $v) {
@@ -92,15 +116,17 @@ sub _set_author {
 	}
 
 	if ($need && !defined $v) {
-		error('required author data not set: ' . $cfg_k);
+		error('required ' . $pfx . ' data not set: ' . $cfg_k);
 		return 1;
 	}
 
-	$m_main{'author_' . $k}[0] = $name;
+	$m_main{'_' . $pfx . '_' . $k}[0] = $name;
 	if (defined $email) {
-		$m_main{'author_' . $k}[1] = $name . ' <' . $email . '>';
+		$m_main{'_' . $pfx . '_' . $k}[1] = $name . ' <' . $email . '>';
 	}
-	$m_main{'author_' . $k}[2] = $pgp;
+	$m_main{'_' . $pfx . '_' . $k}[2] = $pgp;
+	$m_main{$pfx . '_' . $k} = $v;
+	debug('kkkvvv ' . $pfx . '_' . $k);
 
 	return 0;
 }
@@ -197,7 +223,7 @@ sub from_config {
 	$r += _set_single($cfg, 'main.license', 'license', 1);
 	$r += _set_single($cfg, 'main.copyright', 'copyright', 1);
 	$r += _set_single($cfg, 'main.uri', 'uri', 1);
-	$r += _set_author($cfg, 'maintainer', 1);
+	$r += _set_author($cfg, 'maintainer', undef, 1);
 	if ($r) {
 		error('invalid configuration');
 		return undef;
@@ -230,6 +256,7 @@ sub from_config {
 		push(@m_vcs, $v);
 	}
 
+	my $cfg_vars = $cfg->vars();
 	foreach my $k ($cfg->vars()) {
 		if ($k =~ /^changelog\.(.+)$/) {
 			if ($m_main{version} eq $1) {
@@ -239,6 +266,17 @@ sub from_config {
 				debug('found version match in changelog for ' . $1);	
 
 				$have_version_match = SemVer->new($1);
+			}
+		} elsif ($k =~ /^contributor:(.+)\.(\w+)$/) {
+			if ($1 eq $m_main{version}) {
+#				if (!defined $m_main{"_contributor_$2"}) {
+#					if (_set_contributor($cfg, $1, $2, 0)) {
+#						error('corrupted contributor record for ' . $1 . ': ' . $2);
+#					}
+#					debug('found contributor for ' . $1 . ': '. $2);
+#				}
+				push(@m_contributors, $cfg_vars->{$k});
+				debug('found contributor for ' . $1 . ': '. $2 . ' -> ' . $cfg_vars->{$k});
 			}
 		}
 	}
@@ -320,10 +358,18 @@ sub from_config {
 
 	$m_main{engine} = $env->{engine};
 
-	for $k (keys %m_main) {
-		debug('release data: ' . $k . ': ' . $m_main{$k});
-	}
+#	for $k (keys %m_main) {
+#		if ($k =~ /^contributor_(.+)/) {
+#			push(@m_contributors, $m_main{$k});
+#			debug("adding contributor string line: " . $k . " -> " . $m_main{contributors});
+#		}
+#	}
 
+	for $k (keys %m_main) {
+		if ($k =~ /^[^_].*/) {
+			debug('release data: ' . $k . ': ' . $m_main{$k});
+		}
+	}
 
 	return $have_version_match;
 }
