@@ -4,7 +4,7 @@ use Cwd;
 use File::Basename qw/basename fileparse/;
 use Digest::SHA;
 
-use Log::Term::Ansi qw/error info debug warn trace/;
+use Bluto::Log qw/error info debug warn trace/;
 use Bluto::Tree qw/release_path/;
 use File::Path qw / make_path /;
 

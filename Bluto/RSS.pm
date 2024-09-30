@@ -5,7 +5,7 @@ use DateTime;
 
 use XML::RSS;
 
-use Log::Term::Ansi qw/error info debug warn trace/;
+use Bluto::Log qw/error info debug warn trace/;
 use Bluto::Tree qw/announce_path/;
 
 

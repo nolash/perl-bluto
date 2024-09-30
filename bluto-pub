@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use v5.10.1;
 use warnings;
@@ -16,13 +16,11 @@ use lib (dirname(abs_path($0)));
 use Config::Simple;
 use YAML::Tiny;
 
-# bundled external imports
-use SemVer;
-
 # local imports
-use Log::Term::Ansi qw/debug/;
+use Bluto::Log qw/debug/;
 use Bluto;
 use Bluto::RSS;
+use Bluto::SemVer;
 
 sub croak {
 	die(shift);
@@ -80,7 +78,7 @@ if (defined $force_version) {
 
 $env{loglevel} = $loglevel;
 
-$env{engine} = 'bluto v' . SemVer->new(Bluto::VERSION). " (perl $^V)";
+$env{engine} = 'bluto v' . SemVer->new(Bluto::version()). " (perl $^V)";
 foreach my $k (keys %env ) {
 	if (defined $env{$k}) {
 		debug('environment "' . $k . '":  ' . $env{$k});

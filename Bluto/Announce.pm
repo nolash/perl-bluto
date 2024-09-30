@@ -2,7 +2,7 @@ package Bluto::Announce;
 
 use Template;
 
-use Log::Term::Ansi qw/error info debug warn trace/;
+use Bluto::Log qw/error info debug warn trace/;
 
 my $pos;
 

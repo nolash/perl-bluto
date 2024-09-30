@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use v5.10.1;
 use warnings;
@@ -13,8 +13,9 @@ use lib (dirname(abs_path($0)));
 use Digest::SHA;
 
 use SemVer;
-use Log::Term::Ansi qw/debug/;
 use YAML::Tiny;
+
+use Bluto::Log qw/debug/;
 
 # TODO: export to perl modules
 

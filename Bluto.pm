@@ -1,18 +1,17 @@
 package Bluto;
 
 use File::Basename qw/ basename /;
-use SemVer;
+use File::Path qw / make_path /;
 
-use Log::Term::Ansi qw/error info debug warn trace/;
+use Bluto::Log qw/error info debug warn trace/;
 use Bluto::Archive;
 use Bluto::Announce;
 use Bluto::Tree;
-use File::Path qw / make_path /;
-
-use Log::Term::Ansi qw/info debug/;
+use Bluto::SemVer;
 
 use constant { VCS_TAG_PREFIX => 'v' };
-use constant { VERSION => '0.0.1' };
+#use constant { VERSION => '0.0.1' };
+our $VERSION = '0.0.1' ;
 
 our %config;
 our $have_version_match = undef;
@@ -45,6 +44,10 @@ our %m_main = (
 	contributors => \@m_contributors,
 	engine => undef,
 );
+
+sub version {
+	return $VERSION;
+}
 
 sub _set_single {
 	my $cfg = shift;

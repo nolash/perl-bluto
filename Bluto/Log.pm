@@ -1,7 +1,8 @@
-package Log::Term::Ansi;
+package Bluto::Log;
 
 use Exporter qw/import/;
 our @EXPORT = qw/error info debug warn trace/;
+our $VERSION = 0.0.1;
 
 our $fh = STDERR;
 
