@@ -1,0 +1,89 @@
+#!/usr/bin/env perl
+
+use v5.10.1;
+use warnings;
+use strict;
+
+use Getopt::Long qw/ :config auto_help /;
+use Cwd qw/ getcwd abs_path /;
+use File::Spec;
+use File::Path qw/make_path/;
+
+use YAML::Tiny;
+
+
+sub help() {
+	print("$0\n\nwould have shown help...\n");
+	exit 0;
+}
+
+my %env_sub = (
+	name => "",
+	summary => "",
+	maintainer => $ENV{LOGNAME} || $ENV{USER} || getpwuid($<),
+);
+
+my $force_version = undef;
+my $loglevel = 0;
+my $force_help = 0;
+my %env = (
+	src_dir => File::Spec->catfile(getcwd, '.bluto'),
+	changelog_file => undef,
+	version => undef,
+	loglevel => undef,
+);
+GetOptions(
+	'd:s', \$env{src_dir},
+	'name:s', \$env_sub{name},
+	'summary:s', \$env_sub{summary},
+	'v+', \$loglevel,
+	'h+', \$force_help,
+	'help+', \$force_help,
+);
+
+my $slug = lc($env_sub{name});
+$slug =~ y/ /_/;
+$slug =~ s/[^a-zA-Z0-9_]//g;
+
+my $yc = {
+	name => $env_sub{name},
+	slug => $slug,
+	summary => $env_sub{summary},
+	license => "",
+	copyright => "",
+	tech => "",
+	vcs => {
+		tag_prefix => "v",
+	},
+	sign => {
+		rsa => "",
+		ed22519 => "",
+		secp256k1 => "",
+	},
+	fund => {
+		btc => "",
+		eth => "",
+		monero => "",
+	},
+	locate => {
+		www => [],
+		rel => [],
+		vcs => [],
+		tgzbase => [],
+	},
+	author => {
+		name => "",
+		email => "",
+		pgp => "",
+	},
+	maintainer => {
+		name => $env_sub{maintainer},
+		email => "",
+		pgp => "",
+	},
+};
+
+make_path($env{src_dir});
+my $yo = YAML::Tiny->new($yc);
+my $fn = File::Spec->catfile($env{src_dir}, 'bluto.yml');
+$yo->write($fn);

@@ -1,4 +1,7 @@
-# bluto
+# Bluto
+
+A simple-minded software packager.
+
 
 ## License
 
