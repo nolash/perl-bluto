@@ -23,7 +23,7 @@ Bluto::Cmd::process_param();
 
 my $version = Bluto::Cmd::get_version();
 if (!defined $version) {
-	Bluto::Cmd::croak("version missing");
+	die("version missing");
 }
 
 my $ym = Bluto::Cmd::base_config();
