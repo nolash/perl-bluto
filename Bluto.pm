@@ -1,5 +1,6 @@
 package Bluto;
 
+use DateTime;
 use File::Basename qw/ basename /;
 use File::Path qw / make_path /;
 
@@ -8,6 +9,7 @@ use Bluto::Archive;
 use Bluto::Announce;
 use Bluto::Tree;
 use Bluto::SemVer;
+use Bluto::RSS;
 
 use constant { VCS_TAG_PREFIX => 'v' };
 #use constant { VERSION => '0.0.1' };
@@ -302,7 +304,7 @@ sub from_yaml {
 	}
 	my @targz_stat = stat ( $targz );
 	$m_main{time} = DateTime->from_epoch( epoch => $targz_stat[9] )->stringify();
-	foreach my $v ( $cfg->{locate}->{tgzbase}) {
+	foreach my $v ( @{$cfg_m->{locate}->{tgzbase}}) {
 		warn('not checking targz base formatting for ' . $v);
 		my $src = $m_main{slug} . '/' . basename($targz);
 		push(@m_src, $v . '/' . $src);

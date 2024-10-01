@@ -18,7 +18,7 @@ sub _adapt_headings {
 		$this = undef;
 		if (defined $last) {
 			if ($_ =~ /^===/) {
-				$this = '=' x length($last);
+				$this = '=' x (length($last) - 1);
 			} elsif ($_ =~ /^---/) {
 				if ($last !~ /^\W+$/) {
 					$this = '-' x (length($last) - 1);

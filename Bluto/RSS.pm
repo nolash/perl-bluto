@@ -14,7 +14,6 @@ sub get_feed_filepath {
 	my $env = shift;
 
 	my $fn = $release->{slug} . '.bluto.rss';
-	#my $fp = File::Spec->catfile($env->{feed_dir}, $fn);
 	my $fp = File::Spec->catfile(Bluto::Tree->announce_path, $fn);
 	return $fp;
 }

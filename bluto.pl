@@ -4,14 +4,20 @@ use v5.10.1;
 use warnings;
 use strict;
 
+use File::Spec;
 use File::Basename qw/ dirname /;
 use Cwd qw/ getcwd abs_path /;
 use lib (dirname(abs_path($0)));
 
+use Bluto::Log qw/debug/;
 use Bluto::Cmd;
+use Bluto;
 
 Bluto::Cmd::register_param("version", undef, "version", undef);
-Bluto::Cmd::register_param("changelog_file", undef, undef, "f");
+Bluto::Cmd::register_param("out_dir", File::Spec->catfile(getcwd, 'bluto_build'), undef, "o");
+Bluto::Cmd::register_param("feed_dir", undef, "feed-dir", undef);
+Bluto::Cmd::register_param("content_dir", undef, "code-dir", "c");
+Bluto::Cmd::register_param("readme", undef, undef, undef);
 
 Bluto::Cmd::process_param();
 
@@ -20,16 +26,24 @@ if (!defined $version) {
 	Bluto::Cmd::croak("version missing");
 }
 
+my $ym = Bluto::Cmd::base_config();
+my $yv = Bluto::Cmd::release_config();
+my $env = Bluto::Cmd::params();
+if (!defined $env) {
+	die("not sane");
+}
 
-my @contributors;
-my $yd = Bluto::Cmd::base_config();
-my $yv = {
-	changelog => 'sha256:' . Bluto::Cmd::process_changelog(1),
-	author => $yd->{author}->{name},
-	maintainer => $yd->{maintainer}->{name},
-	contributors => \@contributors,
-};
+my $version = Bluto::from_yaml($ym, $yv, $env);
+if (!defined $version) {
+	die("config processing failed");
+}
 
-my $yo = YAML::Tiny->new($yv);
-my $fn = Bluto::Cmd::release_config_path();
-$yo->write($fn);
+my $announce = Bluto::create_announce($env);
+if (!defined $announce) {
+	die("announce processing failed");
+}
+
+my $rss = Bluto::create_rss($env);
+if (!defined $rss) {
+	die("rss processing failed");
+}
