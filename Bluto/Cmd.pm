@@ -4,6 +4,8 @@ use Getopt::Long qw/ :config auto_help /;
 use Cwd qw/ getcwd abs_path /;
 use File::Spec;
 use File::Path qw/make_path/;
+use File::Copy;
+use Digest::SHA;
 
 use Bluto::SemVer;
 use YAML::Tiny;
@@ -44,7 +46,7 @@ sub register_param {
 		push(@opts_x, $switch_long . ':' . $switch_typ);
 		push(@opts_x, \$env{$env_k});
 	}
-	if (defined $switch_long) {
+	if (defined $switch_short) {
 		push(@opts_x, $switch_short . ':' . $switch_typ);
 		push(@opts_x, \$env{$env_k});
 	}
@@ -87,16 +89,46 @@ sub get_param {
 	return $env{$k};
 }
 
+sub get_version {
+	if (defined $env{version}) {
+		$env{version} = SemVer->new($env{version});
+	}
+	return $env{version};
+}
+
 sub base_config_path {
 	return File::Spec->catfile($env{src_dir}, 'bluto.yml');
 }
 
 sub release_config_path {
 	if (!defined $env{version}) {
-		error("release config path does not exist, version not set");
-		return undef;
+		croak("release config path does not exist, version not set");
 	}
-	return File::Spec->catfile($env{src_dir}, '.yml');
+	return File::Spec->catfile($env{src_dir}, $env{version} . '.yml');
+}
+
+sub base_config {
+	my $fn = base_config_path();
+	my $yi = YAML::Tiny->read($fn);
+	return $yi->[0];
+}
+
+sub process_changelog {
+	my $copy = shift;
+
+	if (!defined $env{changelog_file}) {
+		croak("changelog file missing");
+	}
+
+	my $h = Digest::SHA->new('sha256');
+	$h->addfile($env{changelog_file});
+	my $z = $h->hexdigest;
+	debug('calculated sha256 ' . $z . ' for changelog ' . $env{changelog_file});
+	if ($copy) {
+		my $fp = File::Spec->catfile($env{src_dir}, 'CHANGELOG.' . $env{version});
+		copy($env{changelog_file}, $fp);
+	}
+	return $z;
 }
 
 1;
