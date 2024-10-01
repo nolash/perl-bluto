@@ -108,13 +108,13 @@ ONLINE RESOURCES
 [% FOREACH v IN url %]* [% v %]
 [% END %]
 
-[% IF contributors %]CONTRIBUTORS IN THIS VERSION
+[% FOREACH v IN contributors %][% IF !have_contributors %]CONTRIBUTORS IN THIS VERSION
 ----------------------------
 
-[% FOREACH v IN contributors %]* [% v %]
-[% END %]
-[% END %]
-CHANGELOG
+[% SET have_contributors = 1 %][% END %]* [% v %]
+[% END %][% IF have_contributors %]
+
+[% END %]CHANGELOG
 ---------
 
 [% changelog %]
