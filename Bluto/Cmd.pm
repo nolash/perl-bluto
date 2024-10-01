@@ -8,7 +8,7 @@ use File::Path qw/make_path/;
 use Bluto::SemVer;
 use YAML::Tiny;
 
-use Bluto::Log qw/debug/;
+use Bluto::Log qw/debug error/;
 
 
 my $force_version = undef;
@@ -68,6 +68,10 @@ sub process_param {
 		$env{version} = SemVer->new($env{version});
 	}
 
+	if (defined $env{src_dir}) {
+		make_path($env{src_dir});
+	}
+
 	foreach my $k (keys %env) {
 		my $v = $env{$k};
 		if (defined $v) {
@@ -81,6 +85,18 @@ sub process_param {
 sub get_param {
 	my $k = shift;
 	return $env{$k};
+}
+
+sub base_config_path {
+	return File::Spec->catfile($env{src_dir}, 'bluto.yml');
+}
+
+sub release_config_path {
+	if (!defined $env{version}) {
+		error("release config path does not exist, version not set");
+		return undef;
+	}
+	return File::Spec->catfile($env{src_dir}, '.yml');
 }
 
 1;
