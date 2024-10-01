@@ -1,40 +1,33 @@
-name: "Bluto"
-slug: "bluto"
-summary: "A simple-minded software packager"
-license: "perl"
-copyright: "Louis Holbrook"
-tech: "perl"
-
-vcs:
-  tag_prefix: "v"
-
-sign:
-  rsa:
-  ed22519:
-  secp256k1:
-
+---
+author:
+  email: 'dev@holbrook.no'
+  name: 'Louis Holbrook'
+  pgp: '0826EDA1702D1E87C6E2875121D2E7BB88C2A746'
+copyright: 'Louis Holbrook'
 fund:
-  btc:
-  eth:
-  monero:
-
+  btc: ''
+  eth: ''
+  monero: ''
+license: ''
 locate:
-  www:
-    - https://defalsify.org/git/bluto
-  vcs:
-    - git+git://git.defalsify.org/bluto.git
+  rel: []
   tgzbase:
     - https://defalsify.org/pub/src
-  rel:
-    - https://holbrook.no
-    - https://defalsify.org
-
+  vcs:
+    - git+git://git.defalsify.org/perl-bluto
+  www:
+    - https://defalsify.org/git/bluto
 maintainer:
+  email: 'dev@holbrook.no'
   name: "Louis Holbrook"
-  email: "dev@holbrook.no"
-  pgp: "0826EDA1702D1E87C6E2875121D2E7BB88C2A746"
-
-author:
-  name: "Louis Holbrook"
-  email: "dev@holbrook.no"
-  pgp: "0826EDA1702D1E87C6E2875121D2E7BB88C2A746"
+  pgp: '0826EDA1702D1E87C6E2875121D2E7BB88C2A746'
+name: Bluto
+sign:
+  ed22519: ''
+  rsa: ''
+  secp256k1: ''
+slug: "bluto"
+summary: 'A simple-minded software packager'
+tech: 'perl'
+vcs:
+  tag_prefix: v
