@@ -111,7 +111,7 @@ ONLINE RESOURCES
 [% FOREACH v IN contributors %][% IF !have_contributors %]CONTRIBUTORS IN THIS VERSION
 ----------------------------
 
-[% SET have_contributors = 1 %][% END %]* [% v %]
+[% SET have_contributors = 1 %][% END %]* [% v.name %][% IF v.pgp %] (pgp:[% v.pgp %])[% END %]
 [% END %][% IF have_contributors %]
 
 [% END %]CHANGELOG
