@@ -29,6 +29,11 @@ sub help {
 	exit 0;
 }
 
+sub croak_ {
+	$v = shift;
+	die $v;
+}
+
 sub register_param {
 	my $env_k = shift;
 	my $env_v_default = shift;
@@ -64,12 +69,12 @@ sub process_param {
 		help;
 	}
 
-	if (defined $env{version}) {
-		$env{version} = SemVer->new($env{version});
-	}
-
 	if (defined $env{src_dir}) {
 		make_path($env{src_dir});
+	}
+
+	if (defined $env{version}) {
+		$env{version} = SemVer->new($env{version});
 	}
 
 	$env{engine} = 'bluto v' . SemVer->new(Bluto::version()). " (perl $^V)";
@@ -204,7 +209,7 @@ sub _check_version {
 sub _check_sanity {
 	my $r = 0;
 
-	$r += _check_readme($env);	
+	$r += _check_readme($env);
 	$r += _check_yml($env);
 	$r += _check_version($env);
 

@@ -18,6 +18,7 @@ sub prepare {
 	my $release = shift;
 	my $env = shift;
 
+	$env->{out_dir} = File::Spec->rel2abs($env->{out_dir});
 	$_release_path = File::Spec->catfile($env->{out_dir}, 'src', $release->{slug});
 	make_path(release_path);
 	$_announce_path = File::Spec->catfile($env->{out_dir}, 'announce', $release->{slug});

@@ -6,7 +6,7 @@ use DateTime;
 use XML::RSS;
 
 use Bluto::Log qw/error info debug warn trace/;
-use Bluto::Tree qw/announce_path/;
+use Bluto::Tree;
 
 
 sub get_feed_filepath {

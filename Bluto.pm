@@ -299,10 +299,16 @@ sub from_yaml {
 	#my $targz = Bluto::Archive::create($m_main{slug}, $m_main{version}, $m_main{author_maintainer}[2], $m_main{tag_prefix}, $env->{src_dir}, $env->{out_dir}, 0);
 	my $targz = Bluto::Archive::create(\%m_main, $env, 1);
 	if (!defined $targz) {
-		error('failed to generate archive');
+		error('failed to generate archive (yaml)');
 		return undef;
 	}
+
 	my @targz_stat = stat ( $targz );
+
+	if (!@targz_stat) {
+		error('generated archive but could not find again in expected place: ' . $targz);
+		return undef;
+	}
 	$m_main{time} = DateTime->from_epoch( epoch => $targz_stat[9] )->stringify();
 	foreach my $v ( @{$cfg_m->{locate}->{tgzbase}}) {
 		warn('not checking targz base formatting for ' . $v);
@@ -531,6 +537,14 @@ sub create_rss {
 
 	#return Bluto::RSS::to_string(\%m_main, $env, $out);
 	return Bluto::RSS::to_file(\%m_main, $env, $out);
+}
+
+sub create_yaml {
+	my $y_base = shift;
+	my $y_release = shift;
+	my $env = shift;
+
+	my $y = YAML::Tiny->new($y_base);
 }
 
 1;

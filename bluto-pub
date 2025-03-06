@@ -21,19 +21,16 @@ Bluto::Cmd::register_param("readme", undef, undef, undef);
 
 Bluto::Cmd::process_param();
 
+my $env = Bluto::Cmd::params();
 my $version = Bluto::Cmd::get_version();
-if (!defined $version) {
-	die("version missing");
-}
 
 my $ym = Bluto::Cmd::base_config();
 my $yv = Bluto::Cmd::release_config();
-my $env = Bluto::Cmd::params();
 if (!defined $env) {
 	die("not sane");
 }
 
-my $version = Bluto::from_yaml($ym, $yv, $env);
+$version = Bluto::from_yaml($ym, $yv, $env);
 if (!defined $version) {
 	die("config processing failed");
 }
@@ -46,4 +43,9 @@ if (!defined $announce) {
 my $rss = Bluto::create_rss($env);
 if (!defined $rss) {
 	die("rss processing failed");
+}
+
+my $yr = Bluto::create_yaml($ym, $yv, $env);
+if (!defined $yr) {
+	die("yaml output processing failed");
 }

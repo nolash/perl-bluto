@@ -18,6 +18,8 @@ WriteMakefile(
 		'Template'	=> 2.66,
 		'Digest::SHA'	=> 2.13,
 		'XML::RSS'	=> 1.63,
+		# package https://metacpan.org/pod/Bitcoin::Secp256k1
+		'Bitcoin::Secp256k1'	=> 0.004,
 	},
 	TEST_REQUIRES	=> {},
 );
