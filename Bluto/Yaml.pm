@@ -53,6 +53,7 @@ sub add_release_yaml {
 		$yb->{releases} = {};
 	}
 
+	$yr->{timestamp} = $release->{timeobj}->epoch;
 	$yb->{releases}->{$env->{version}} = $yr;
 
 	$yb = add_existing_releases($release, $yb);

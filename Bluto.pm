@@ -35,6 +35,7 @@ our %m_main = (
 	tag_prefix => VCS_TAG_PREFIX,
 	changelog => undef,
 	time => undef,
+	timeobj => undef,
 	#tech_main => undef,
 	tech => undef,
 	vcs => \@m_vcs,
@@ -311,7 +312,8 @@ sub from_yaml {
 		error('generated archive but could not find again in expected place: ' . $targz);
 		return undef;
 	}
-	$m_main{time} = DateTime->from_epoch( epoch => $targz_stat[9] )->stringify();
+	$m_main{timeobj} = DateTime->from_epoch( epoch => $targz_stat[9] );
+	$m_main{time} = $m_main{timeobj}->stringify();
 	foreach my $v ( @{$cfg_m->{locate}->{tgzbase}}) {
 		warn('not checking targz base formatting for ' . $v);
 		my $src = $m_main{slug} . '/' . basename($targz);

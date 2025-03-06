@@ -28,6 +28,7 @@ my $yv = {
 	author => $yd->{author}->{name},
 	maintainer => $yd->{maintainer}->{name},
 	contributors => \@contributors,
+	timestamp => -1,
 };
 
 my $yo = YAML::Tiny->new($yv);
