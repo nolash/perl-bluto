@@ -544,6 +544,7 @@ sub create_rss {
 sub create_yaml {
 	my $y_base = shift;
 	my $y_release = shift;
+	my $env = shift;
 
 	my $y = Bluto::Yaml::add_release_yaml(\%m_main, $y_base, $y_release, $env);
 	my $fp = Bluto::Yaml::to_file(\%m_main, $y);
