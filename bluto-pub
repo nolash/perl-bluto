@@ -40,12 +40,12 @@ if (!defined $announce) {
 	die("announce processing failed");
 }
 
-my $rss = Bluto::create_rss($env);
-if (!defined $rss) {
-	die("rss processing failed");
-}
-
 my $yr = Bluto::create_yaml($ym, $yv, $env);
 if (!defined $yr) {
 	die("yaml output processing failed");
+}
+
+my $rss = Bluto::create_rss($env);
+if (!defined $rss) {
+	die("rss processing failed");
 }

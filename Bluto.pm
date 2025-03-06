@@ -10,6 +10,7 @@ use Bluto::Announce;
 use Bluto::Tree;
 use Bluto::SemVer;
 use Bluto::RSS;
+use Bluto::Yaml;
 
 use constant { VCS_TAG_PREFIX => 'v' };
 #use constant { VERSION => '0.0.1' };
@@ -189,6 +190,7 @@ sub _check_version {
 }
 
 sub _prepare_out {
+	my $r = 0;
 	my $release = shift;
 	my $env = shift;
 
@@ -542,9 +544,11 @@ sub create_rss {
 sub create_yaml {
 	my $y_base = shift;
 	my $y_release = shift;
-	my $env = shift;
 
-	my $y = YAML::Tiny->new($y_base);
+	my $y = Bluto::Yaml::add_release_yaml(\%m_main, $y_base, $y_release, $env);
+	my $fp = Bluto::Yaml::to_file(\%m_main, $y);
+
+	debug('stored announce yaml file: ' . $fp);
 }
 
 1;
