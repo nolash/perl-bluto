@@ -1,5 +1,6 @@
 package Bluto::Yaml;
 
+use File::Basename qw/basename/;
 use Bluto::Log qw/error info debug warn trace/;
 use Bluto::Tree;
 
@@ -54,6 +55,7 @@ sub add_release_yaml {
 	}
 
 	$yr->{timestamp} = $release->{timeobj}->epoch;
+	$yr->{archive} = 'sha256:' . $release->{archive};
 	$yb->{releases}->{$env->{version}} = $yr;
 
 	$yb = add_existing_releases($release, $yb);
@@ -64,11 +66,39 @@ sub add_release_yaml {
 sub to_file {
 	my $release = shift;
 	my $y = shift;
+	my $keygrip = shift;
 
 	my $fp = yaml_path($release);
 
 	$y->write($fp);
 
+	# DRY with Bluto/Archive.pm
+	my $keygrip = $release->{_author_maintainer}->[2];
+	debug('using keygrip for yaml: ' . $keygrip);
+
+	my $h = Digest::SHA->new('sha256');
+	$h->addfile($fp);
+	my $z = $h->hexdigest;
+	debug('calculated sha256 ' . $z . ' for yaml ' . $fp);
+
+	my $hp = $fp . '.sha256';
+	my $f;
+	open($f, ">$hp") or (error('could not open yaml digest file: ' . $!) && return undef);
+	print $f $z . "\t" . basename($fp) . "\n";
+	close($f);
+
+	if (!defined $keygrip) {
+		warn('skipping yaml signature due to missing key');
+		return $fp;
+	}
+
+	my @cmd = ('gpg', '-a', '-b', '-u', $keygrip, $hp);
+	system(@cmd);
+	if ($?) {
+		error('failed sign with key '. $keygrip);
+		unlink($hp);
+		return undef;
+	}
 	return $fp;
 }
 

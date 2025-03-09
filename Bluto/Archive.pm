@@ -11,6 +11,7 @@ use File::Path qw / make_path /;
 
 
 sub seal {
+	my $release = shift;
 	my $targz = shift;
 	my $keygrip = shift;
 	# TODO: intended to be numeric flags but now we just use the first bit to force sign or not
@@ -27,6 +28,7 @@ sub seal {
 	$h->addfile($targz);
 	my $z = $h->hexdigest;
 	debug('calculated sha256 ' . $z . ' for archive ' . $targz);
+	$release->{archive} = $z;
 	my $hp = $targz . '.sha256';
 	my $f;
 	open($f, ">$hp") or (error('could not open digest file: ' . $!) && return undef);
@@ -34,7 +36,7 @@ sub seal {
 	close($f);
 
 	if (!defined $keygrip) {
-		warn('skipping signature due to missing key');
+		warn('skipping archive signature due to missing key');
 		return $z;
 	}
 
@@ -55,7 +57,7 @@ sub create {
 	my $flags = shift;
 
 	my $keygrip = $release->{_author_maintainer}->[2];
-	debug('using keygrip: ' . $keygrip);
+	debug('using keygrip for archive: ' . $keygrip);
 
 	my $old_dir = cwd;
 
@@ -101,7 +103,7 @@ sub create {
 			return undef;
 		}
 
-		my $seal = seal($targz_local, $keygrip, $flags & 1);
+		my $seal = seal($release, $targz_local, $keygrip, $flags & 1);
 		if (!defined $seal) {
 			error("failed sealing archive");
 			unlink($targz_local);

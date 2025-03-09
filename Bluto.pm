@@ -34,6 +34,7 @@ our %m_main = (
 	copyright => undef,
 	tag_prefix => VCS_TAG_PREFIX,
 	changelog => undef,
+	archive => undef,
 	time => undef,
 	timeobj => undef,
 	#tech_main => undef,
