@@ -14,7 +14,7 @@ use Bluto::Yaml;
 
 use constant { VCS_TAG_PREFIX => 'v' };
 #use constant { VERSION => '0.0.1' };
-our $VERSION = '0.0.1' ;
+our $VERSION = '0.0.3' ;
 
 our %config;
 our $have_version_match = undef;

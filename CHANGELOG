@@ -1,0 +1,10 @@
+* 0.0.3
+	- Allow relative outdir path.
+	- Maintain a (signed) releases yaml document, including information on all releases.
+	- Add timestamp and archive digest to release state.
+* 0.0.2
+	- Use same object structure for contributor.
+	- Hide contributor section in template when no extra contributors.
+	- Basic targz publish function.
+	- Asciidoc announcement generator.
+	- Asciidoc to RSS 1.0 announcement translator.
